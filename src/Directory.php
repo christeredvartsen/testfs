@@ -30,7 +30,7 @@ class Directory extends Asset {
     /**
      * Get directory children
      *
-     * @return Asset[] Returns a numerically indexed array with all child assets of the directory
+     * @return File[]|Directory[] Returns a numerically indexed array with all child assets of the directory
      */
     public function getChildren() : array {
         return $this->children;
