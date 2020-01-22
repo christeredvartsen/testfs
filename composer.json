@@ -38,6 +38,7 @@
     "sa": "vendor/bin/phpstan analyse src --level max --no-progress",
     "loc": "vendor/bin/phploc src",
     "ci": [
+      "@lint",
       "@test",
       "@sa",
       "@loc"
