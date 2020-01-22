@@ -17,6 +17,13 @@ TestFS\StreamWrapper::register();
 
 When it is registered it will pick up usage of the `tfs://` protocol used with filesystem functions, for instance `fopen()`, `file_get_contents()`, `touch()` and so forth.
 
+## Development
+```
+git clone git@github.com:christeredvartsen/testfs.git
+composer install
+composer run ci
+```
+
 ## License
 
 Licensed under the MIT License.
