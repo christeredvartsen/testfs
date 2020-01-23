@@ -5,7 +5,7 @@
 namespace TestFs;
 
 /**
- * Convert a regular path to a TestFS URL
+ * Convert a regular path to a TestFs URL
  *
  * @param string $path Regular file path
  * @return string

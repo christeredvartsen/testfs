@@ -1,4 +1,4 @@
-# TestFS
+# TestFs
 Virtual filesystem for PHP for use with testing, implemented using a stream wrapper.
 
 ## Installation
@@ -12,7 +12,7 @@ composer install christeredvartsen/testfs
 To enable the stream wrapper you must first register it:
 
 ```php
-TestFS\StreamWrapper::register();
+TestFs\StreamWrapper::register();
 ```
 
 When it is registered it will pick up usage of the `tfs://` protocol used with filesystem functions, for instance `fopen()`, `file_get_contents()`, `touch()` and so forth.

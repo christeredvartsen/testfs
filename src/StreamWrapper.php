@@ -257,7 +257,7 @@ class StreamWrapper {
     }
 
     /**
-     * Get a TestFS URL given a path
+     * Get a TestFs URL given a path
      *
      * @param string $path The path to get the URL to
      * @return string Returns the path with the protocol prefixed
@@ -733,7 +733,7 @@ class StreamWrapper {
         $parent = $this->getAssetParent($path);
 
         if ((bool) (STREAM_USE_PATH & $options)) {
-            $this->warn('TestFS does not support "use_include_path"');
+            $this->warn('TestFs does not support "use_include_path"');
 
             return false;
         }
@@ -1073,7 +1073,7 @@ class StreamWrapper {
     /**
      * Get an asset from a URL
      *
-     * @param string $url TestFS URL
+     * @param string $url TestFs URL
      * @return ?Asset Returns the asset if it exists, or null otherwise
      */
     private function getAssetFromUrl(string $url) : ?Asset {

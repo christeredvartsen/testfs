@@ -543,7 +543,7 @@ class StreamWrapperTest extends TestCase {
         $this->assertFalse(@fopen('tfs://foo.txt', 'w', true));
 
         $this->expectWarning();
-        $this->expectWarningMessage('TestFS does not support "use_include_path"');
+        $this->expectWarningMessage('TestFs does not support "use_include_path"');
         fopen('tfs://foo.txt', 'w', true);
     }
 
