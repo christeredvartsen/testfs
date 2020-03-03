@@ -752,13 +752,15 @@ class StreamWrapper {
             return false;
         }
 
-        if ($asset instanceof Directory && $mode['write']) {
+        if ($asset instanceof Directory && $mode->write()) {
             $this->warn(sprintf('fopen(%s): failed to open stream. Is a directory', $path));
 
             return false;
+        } else if ($asset instanceof Directory) {
+            return false;
         }
 
-        if (null === $asset && !$mode['create']) {
+        if (null === $asset && !$mode->create()) {
             $this->warn(sprintf('fopen(%s): failed to open stream: No such file or directory', $path));
 
             return false;
@@ -771,24 +773,20 @@ class StreamWrapper {
         } else if (null === $asset) {
             $asset = $this->getAssetFactory()->file(basename($path));
             $parent->addChild($asset);
-        } else if ($mode['read'] && !$asset->isReadable(self::$uid, self::$gid)) {
+        } else if ($mode->read() && !$asset->isReadable(self::$uid, self::$gid)) {
             $this->warn(sprintf('fopen(%s): failed to open stream: Permission denied', $path));
 
             return false;
         }
 
-        // Hack to make PHPStan happy
-        /** @var File */
-        $asset = $asset;
+        $asset->setRead($mode->read());
+        $asset->setWrite($mode->write());
 
-        $asset->setRead($mode['read']);
-        $asset->setWrite($mode['write']);
-
-        if ($mode['truncate']) {
+        if ($mode->truncate()) {
             $asset->truncate();
         }
 
-        if (SEEK_END === $mode['offset']) {
+        if (SEEK_END === $mode->offset()) {
             $asset->setAppendMode(true);
         }
 
@@ -1048,26 +1046,18 @@ class StreamWrapper {
      *
      * @param string $mode The mode given to fopen()
      * @throws InvalidArgumentException Throws an exception if the mode is invalid
-     * @return array
+     * @return FopenMode
      */
-    private function parseFopenMode(string $mode) : array {
+    private function parseFopenMode(string $mode) : FopenMode {
         if (0 === preg_match('/^(?P<mode>r|w|a|x|c)(?P<extra>b|t)?(?P<extended>\+)?$/', $mode, $match)) {
             throw new InvalidArgumentException(sprintf('Unsupported mode: "%s"', $mode));
         }
 
-        $mode     = $match['mode'];
-        $extra    = $match['extra'] ?? null;
-        $extended = !empty($match['extended']);
-
-        return [
-            'read'     => 'r' === $mode || $extended,
-            'write'    => in_array($mode, ['w', 'a', 'x', 'c']) || $extended,
-            'offset'   => 'a' === $mode ? SEEK_END : 0,
-            'truncate' => 'w' === $mode,
-            'create'   => in_array($mode, ['w', 'a', 'x', 'c']),
-            'binary'   => 'b' === $extra,
-            'text'     => 't' === $extra,
-        ];
+        return new FopenMode(
+            $match['mode'],
+            !empty($match['extended']),
+            $match['extra'] ?? null
+        );
     }
 
     /**
