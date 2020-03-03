@@ -37,7 +37,7 @@ class StreamWrapper {
     /**
      * Asset factory
      *
-     * @var AssetFactory
+     * @var ?AssetFactory
      */
     private static $assetFactory;
 
@@ -78,7 +78,7 @@ class StreamWrapper {
      *
      * This database is set when registering the wrapper
      *
-     * @var array
+     * @var array<array-key, array{name: string, members: array}>
      */
     private static $defaultGroups = [
         0 => [
@@ -90,7 +90,7 @@ class StreamWrapper {
     /**
      * Group "database"
      *
-     * @var array
+     * @var array<array-key, array{name: string, members: array}>
      */
     private static $groups = [];
 
@@ -698,7 +698,7 @@ class StreamWrapper {
                     return false;
                 }
 
-                $asset->setGid($gid);
+                $asset->setGid((int) $gid);
 
                 break;
             case STREAM_META_ACCESS: // chmod
@@ -708,7 +708,7 @@ class StreamWrapper {
                     return false;
                 }
 
-                $asset->setMode($value);
+                $asset->setMode((int) $value);
 
                 break;
         }
@@ -1113,7 +1113,11 @@ class StreamWrapper {
      * @return bool
      */
     private function userIsInGroup(int $uid, int $gid) : bool {
-        $members = array_flip(self::$groups[$gid]['members'] ?? []);
+        if (empty(self::$groups[$gid]['members'])) {
+            return false;
+        }
+
+        $members = array_flip(self::$groups[$gid]['members']);
 
         return isset($members[$uid]);
     }

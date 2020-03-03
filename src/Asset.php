@@ -62,13 +62,6 @@ abstract class Asset {
     protected $mode;
 
     /**
-     * The type of asset
-     *
-     * @var int
-     */
-    protected $type;
-
-    /**
      * Class constructor
      *
      * @param string $name The name of the asset
@@ -84,6 +77,13 @@ abstract class Asset {
         $this->gid  = StreamWrapper::getGid();
         $this->mode = $this->getDefaultMode();
     }
+
+    /**
+     * Get the asset type
+     *
+     * @return int
+     */
+    abstract public function getType() : int;
 
     /**
      * Get the size of the asset, including child assets
@@ -317,19 +317,10 @@ abstract class Asset {
     /**
      * Get the mode
      *
-     * @return ?int
+     * @return int
      */
-    public function getMode() : ?int {
+    public function getMode() : int {
         return $this->mode;
-    }
-
-    /**
-     * Get the type of the asset
-     *
-     * @return ?int
-     */
-    public function getType() : ?int {
-        return $this->type;
     }
 
     /**

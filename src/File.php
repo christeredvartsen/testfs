@@ -3,13 +3,6 @@ namespace TestFs;
 
 class File extends Asset {
     /**
-     * Asset type
-     *
-     * @var int
-     */
-    protected $type = 0100000;
-
-    /**
      * Contents of the file
      *
      * @var string
@@ -76,6 +69,15 @@ class File extends Asset {
 
         $this->content = $content;
         $this->size = strlen($content);
+    }
+
+    /**
+     * Get the asset type
+     *
+     * @return int
+     */
+    public function getType() : int {
+        return 0100000;
     }
 
     /**

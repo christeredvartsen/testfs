@@ -5,18 +5,20 @@ use TestFs\Exception\InvalidArgumentException;
 
 class Directory extends Asset {
     /**
-     * Asset type
-     *
-     * @var int
-     */
-    protected $type = 0040000;
-
-    /**
      * Child assets in a numerically indexed array
      *
      * @var array
      */
     private $children = [];
+
+    /**
+     * Get the asset type
+     *
+     * @return int
+     */
+    public function getType() : int {
+        return 0040000;
+    }
 
     /**
      * Get the default mode
