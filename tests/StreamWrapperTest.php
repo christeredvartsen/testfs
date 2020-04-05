@@ -12,8 +12,7 @@ class StreamWrapperTest extends TestCase {
     private $root;
 
     public function setUp() : void {
-        StreamWrapper::register(true);
-        $this->root = StreamWrapper::getRoot();
+        $this->root = StreamWrapper::init();
     }
 
     public function tearDown() : void {
@@ -39,6 +38,7 @@ class StreamWrapperTest extends TestCase {
 
     /**
      * @covers ::mkdir
+     * @covers ::init
      * @covers ::register
      * @covers ::unregister
      * @covers ::getRoot
