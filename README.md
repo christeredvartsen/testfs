@@ -1,4 +1,7 @@
 # TestFs
+
+![Run tests](https://github.com/christeredvartsen/testfs/workflows/Run%20tests/badge.svg)
+
 Virtual filesystem for PHP for use with testing, implemented using a stream wrapper.
 
 ## Installation
