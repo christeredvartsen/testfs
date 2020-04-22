@@ -19,10 +19,14 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
 
-      - name: Debug PHP installation
-        run: |
-          php -i
-          php -m
+      - name: PHP version
+        run: php -v
+
+      - name: PHP info
+        run: php -i
+
+      - name: PHP modules
+        run: php -m
 
       - name: Validate composer files
         run: composer validate --strict
