@@ -1,29 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/8.5/phpunit.xsd"
-  bootstrap="vendor/autoload.php"
+<phpunit
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
   executionOrder="depends,defects"
   forceCoversAnnotation="true"
   beStrictAboutCoversAnnotation="false"
   beStrictAboutOutputDuringTests="true"
   beStrictAboutTodoAnnotatedTests="true"
-  verbose="true">
+  verbose="true"
+  bootstrap="tests/bootstrap.php"
+>
+  <coverage processUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">src</directory>
+    </include>
+    <exclude>
+      <file>src/functions.php</file>
+    </exclude>
+  </coverage>
+
   <testsuites>
     <testsuite name="default">
       <directory suffix="Test.php">tests</directory>
     </testsuite>
   </testsuites>
-
-  <php>
-    <const name="FIXTURES_DIR" value="./tests/fixtures" />
-  </php>
-
-  <filter>
-    <whitelist processUncoveredFilesFromWhitelist="true">
-      <directory suffix=".php">src</directory>
-      <exclude>
-        <file>src/functions.php</file>
-      </exclude>
-    </whitelist>
-  </filter>
 </phpunit>

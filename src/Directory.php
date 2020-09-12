@@ -7,9 +7,9 @@ class Directory extends Asset {
     /**
      * Child assets in a numerically indexed array
      *
-     * @var array
+     * @var array<int,File|Directory>
      */
-    private $children = [];
+    private array $children = [];
 
     /**
      * Get the asset type
@@ -32,7 +32,7 @@ class Directory extends Asset {
     /**
      * Get directory children
      *
-     * @return File[]|Directory[] Returns a numerically indexed array with all child assets of the directory
+     * @return array<int,File|Directory> Returns a numerically indexed array with all child assets of the directory
      */
     public function getChildren() : array {
         return $this->children;
@@ -78,7 +78,7 @@ class Directory extends Asset {
     }
 
     /**
-     * Get a child
+     * Get a child asset
      *
      * @param string $name The name of the child to get
      * @return File|Directory|null Returns the asset if it exists
@@ -92,6 +92,30 @@ class Directory extends Asset {
     }
 
     /**
+     * Get a child file
+     *
+     * @param string $name The name of the child file to get
+     * @return ?File
+     */
+    public function getChildFile(string $name) : ?File {
+        $file = $this->getChild($name);
+
+        return $file instanceof File ? $file : null;
+    }
+
+    /**
+     * Get a child directory
+     *
+     * @param string $name The name of the child directory to get
+     * @return ?Directory
+     */
+    public function getChildDirectory(string $name) : ?Directory {
+        $dir = $this->getChild($name);
+
+        return $dir instanceof Directory ? $dir : null;
+    }
+
+    /**
      * Add a child asset to the directory, and set this directory as the parent of the asset
      *
      * @param Asset $asset The child to add
@@ -99,6 +123,10 @@ class Directory extends Asset {
      * @return void
      */
     public function addChild(Asset $asset) : void {
+        if (!$asset instanceof File && !$asset instanceof Directory) {
+            throw new InvalidArgumentException(sprintf('Unsupported asset type: %s', get_class($asset)));
+        }
+
         $name = $asset->getName();
 
         if ($this->hasChild($name)) {
@@ -147,7 +175,7 @@ class Directory extends Asset {
     /**
      * Return a string representing the directory and its contents, like the tree command
      *
-     * @param array $prefix Prefix data for the tree
+     * @param array<int,bool> $prefix Prefix data for the tree
      * @return string
      */
     public function tree(array $prefix = [], int &$numFiles = 0, int &$numDirectories = 1) : string {
