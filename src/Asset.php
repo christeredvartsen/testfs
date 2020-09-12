@@ -5,61 +5,14 @@ use TestFs\Exception\InvalidArgumentException;
 use TestFs\Exception\RuntimeException;
 
 abstract class Asset {
-    /**
-     * Name of the asset
-     *
-     * @var string
-     */
-    private $name;
-
-    /**
-     * Parent asset
-     *
-     * @var ?Directory
-     */
-    private $parent;
-
-    /**
-     * Last accessed timestamp
-     *
-     * @var int
-     */
-    protected $atime;
-
-    /**
-     * Last modified timestamp
-     *
-     * @var int
-     */
-    protected $mtime;
-
-    /**
-     * Inode change timestamp
-     *
-     * @var int
-     */
-    protected $ctime;
-
-    /**
-     * UID of the asset
-     *
-     * @var int
-     */
-    private $uid;
-
-    /**
-     * GID of the asset
-     *
-     * @var int
-     */
-    private $gid;
-
-    /**
-     * Current mode of the asset
-     *
-     * @var int
-     */
-    protected $mode;
+    private string $name;
+    private ?Directory $parent = null;
+    protected int $atime;
+    protected int $mtime;
+    protected int $ctime;
+    private int $uid;
+    private int $gid;
+    protected int $mode;
 
     /**
      * Class constructor
@@ -69,13 +22,13 @@ abstract class Asset {
     public function __construct(string $name) {
         $this->setName($name);
 
-        $time = time();
-        $this->updateLastAccessed($time);
-        $this->updateLastModified($time);
-        $this->updateLastMetadataModified($time);
-        $this->uid  = StreamWrapper::getUid();
-        $this->gid  = StreamWrapper::getGid();
-        $this->mode = $this->getDefaultMode();
+        $time        = time();
+        $this->atime = $time;
+        $this->mtime = $time;
+        $this->ctime = $time;
+        $this->uid   = StreamWrapper::getUid();
+        $this->gid   = StreamWrapper::getGid();
+        $this->mode  = $this->getDefaultMode();
     }
 
     /**
@@ -235,7 +188,7 @@ abstract class Asset {
             throw new InvalidArgumentException('Name can not be empty');
         } else if (false !== strpos($name, DIRECTORY_SEPARATOR)) {
             throw new InvalidArgumentException('Name can not contain a directory separator');
-        } else if (null !== $this->parent && $this->parent->hasChild($name)) {
+        } else if ($this->parent instanceof Directory && $this->parent->hasChild($name)) {
             throw new InvalidArgumentException('There exists an asset with the same name in this directory');
         }
 

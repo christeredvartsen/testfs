@@ -2,40 +2,13 @@
 namespace TestFs;
 
 class FopenMode {
-    /**
-     * @var bool
-     */
-    private $read;
-
-    /**
-     * @var bool
-     */
-    private $write;
-
-    /**
-     * @var int
-     */
-    private $offset;
-
-    /**
-     * @var bool
-     */
-    private $truncate;
-
-    /**
-     * @var bool
-     */
-    private $create;
-
-    /**
-     * @var bool
-     */
-    private $binary;
-
-    /**
-     * @var bool
-     */
-    private $text;
+    private bool $read;
+    private bool $write;
+    private int $offset;
+    private bool $truncate;
+    private bool $create;
+    private bool $binary;
+    private bool $text;
 
     /**
      * Class constructor

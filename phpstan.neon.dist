@@ -1,0 +1,16 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+    scanFiles:
+        - tests/bootstrap.php
+    excludes_analyse:
+        - src/functions.php
+    ignoreErrors:
+        - message: '#Parameter \#1 \$.* of function .* expects resource, resource\|false given#'
+          path: tests/StreamWrapperTest.php
+        - message: '#Call to method PHPUnit\\Framework\\Assert::assertFalse\(\) with true will always evaluate to false#'
+          path: tests/*
+        - message: '#Cannot call method getChild|hasChild|getParent\(\) on TestFs#'
+          path: tests/*

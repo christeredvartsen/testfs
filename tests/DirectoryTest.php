@@ -9,6 +9,13 @@ use PHPUnit\Framework\TestCase;
  */
 class DirectoryTest extends TestCase {
     /**
+     * @covers ::getType
+     */
+    public function testCanGetFileType() : void {
+        $this->assertSame(0040000, (new Directory('name'))->getType(), 'Incorrect directory type');
+    }
+
+    /**
      * @covers ::isEmpty
      * @covers ::getChildren
      */
@@ -21,6 +28,8 @@ class DirectoryTest extends TestCase {
     /**
      * @covers ::addChild
      * @covers ::getChild
+     * @covers ::getChildDirectory
+     * @covers ::getChildFile
      * @covers ::hasDirectory
      * @covers ::hasFile
      * @covers ::hasChild
@@ -35,7 +44,9 @@ class DirectoryTest extends TestCase {
         $dir->addChild($childFile);
 
         $this->assertSame($childDir, $dir->getChild('childDir'), 'Wrong child directory');
+        $this->assertSame($childDir, $dir->getChildDirectory('childDir'), 'Wrong child directory');
         $this->assertSame($childFile, $dir->getChild('childFile'), 'Wrong child file');
+        $this->assertSame($childFile, $dir->getChildFile('childFile'), 'Wrong child file');
         $this->assertNull($dir->getChild('foobar'), 'Did not expect to find any child');
         $this->assertTrue($dir->hasDirectory('childDir'), 'Expected directory to have child directory');
         $this->assertFalse($dir->hasDirectory('childFile'), 'Did not expect directory to have child directory');
@@ -133,5 +144,29 @@ TREE;
         $parent->addChild($childFile);
 
         $this->assertSame($tree, $parent->tree(), 'Incorrect tree');
+    }
+
+    /**
+     * @covers ::addChild
+     */
+    public function testDirectoryFailsWhenAddingUnsupportedChildAsset() : void {
+        $dir = new Directory('name');
+
+        $this->expectExceptionObject(new InvalidArgumentException('Unsupported asset type: TestFs\UnsupportedAsset'));
+        $dir->addChild(new UnsupportedAsset('name'));
+    }
+}
+
+class UnsupportedAsset extends Asset {
+    public function getType() : int {
+        return 0;
+    }
+
+    public function getSize() : int {
+        return 0;
+    }
+
+    public function getDefaultMode() : int {
+        return 0777;
     }
 }

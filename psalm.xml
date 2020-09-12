@@ -7,11 +7,44 @@
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
 >
+    <stubs>
+        <file name="tests/bootstrap.php" />
+    </stubs>
+
     <projectFiles>
         <directory name="src" />
+        <directory name="tests" />
         <ignoreFiles>
             <file name="src/functions.php" />
             <directory name="vendor" />
         </ignoreFiles>
     </projectFiles>
+
+    <issueHandlers>
+        <PossiblyUndefinedMethod>
+            <errorLevel type="suppress">
+                <directory name="tests" />
+                <referencedMethod name="TestFs\File::hasChild" />
+                <referencedMethod name="TestFs\File::getChild" />
+            </errorLevel>
+        </PossiblyUndefinedMethod>
+
+        <PossiblyNullReference>
+            <errorLevel type="suppress">
+                <directory name="tests" />
+            </errorLevel>
+        </PossiblyNullReference>
+
+        <PropertyNotSetInConstructor>
+            <errorLevel type="suppress">
+                <directory name="tests" />
+                <referencedProperty name="TestFs\StreamWrapperTest::$root" />
+            </errorLevel>
+
+            <errorLevel type="suppress">
+                <file name="src/Asset.php" />
+                <referencedProperty name="TestFs\Asset::$name" />
+            </errorLevel>
+        </PropertyNotSetInConstructor>
+    </issueHandlers>
 </psalm>

@@ -18,69 +18,61 @@ class StreamWrapper {
      *
      * @var ?Directory
      */
-    private static $root;
+    private static ?Directory $root;
 
     /**
      * Wrapper protocol
-     *
-     * @var string
      */
-    private static $protocol = 'tfs';
+    private static string $protocol = 'tfs';
 
     /**
      * Name of the root Directory instance
-     *
-     * @var string
      */
-    private static $rootDirectoryName = '<root>';
+    private static string $rootDirectoryName = '<root>';
 
     /**
      * Asset factory
      *
      * @var ?AssetFactory
      */
-    private static $assetFactory;
+    private static ?AssetFactory $assetFactory = null;
 
     /**
      * User ID of the user
-     *
-     * @var int
      */
-    private static $uid = 0;
+    private static int $uid = 0;
 
     /**
      * Default user "database"
      *
      * This database is set when registering the wrapper
      *
-     * @var array
+     * @var array<int,string>
      */
-    private static $defaultUsers = [
+    private static array $defaultUsers = [
         0 => 'root',
     ];
 
     /**
      * User "database"
      *
-     * @var array
+     * @var array<int,string>
      */
-    private static $users = [];
+    private static array $users = [];
 
     /**
      * Group ID of the user
-     *
-     * @var int
      */
-    private static $gid = 0;
+    private static int $gid = 0;
 
     /**
      * Default group "database"
      *
      * This database is set when registering the wrapper
      *
-     * @var array<array-key, array{name: string, members: array}>
+     * @var array<int,array{name:string,members:array<int>}>
      */
-    private static $defaultGroups = [
+    private static array $defaultGroups = [
         0 => [
             'name' => 'root',
             'members' => [0],
@@ -90,7 +82,7 @@ class StreamWrapper {
     /**
      * Group "database"
      *
-     * @var array<array-key, array{name: string, members: array}>
+     * @var array<int,array{name:string,members:array<int>}>
      */
     private static $groups = [];
 
@@ -99,7 +91,7 @@ class StreamWrapper {
      *
      * @var ?ArrayIterator<int,Directory|File>
      */
-    private $directoryIterator;
+    private ?ArrayIterator $directoryIterator = null;
 
     /**
      * Handle used for fopen() and related functions
@@ -231,18 +223,6 @@ class StreamWrapper {
     }
 
     /**
-     * Initialize the stream wrapper with default options and return the root directory
-     *
-     * @return Directory
-     */
-    public static function init() : Directory {
-        self::register();
-
-        /** @var Directory */
-        return self::$root;
-    }
-
-    /**
      * Un-register the stream wrapper and destroy the filesystem root
      *
      * @see https://www.php.net/manual/en/function.stream-wrapper-unregister.php
@@ -262,7 +242,7 @@ class StreamWrapper {
     /**
      * Get the filesystem root
      *
-     * @return Directory|null
+     * @return ?Directory
      */
     public static function getRoot() : ?Directory {
         return self::$root;
@@ -362,9 +342,10 @@ class StreamWrapper {
             throw new RuntimeException('Invalid directory iterator');
         }
 
+        /** @var File|Directory|null */
         $child = $this->directoryIterator->current();
 
-        if (!$child instanceof Asset) {
+        if (null === $child) {
             return false;
         }
 
@@ -627,14 +608,14 @@ class StreamWrapper {
                     $parent->addChild($asset);
                 }
 
-                if (empty($value)) {
+                if (empty($value) || !is_array($value)) {
                     $mtime = $atime = time();
                 } else {
                     [$mtime, $atime] = $value;
                 }
 
-                $asset->updateLastModified($mtime);
-                $asset->updateLastAccessed($atime);
+                $asset->updateLastModified((int) $mtime);
+                $asset->updateLastAccessed((int) $atime);
 
                 break;
             case STREAM_META_OWNER_NAME: // chown() with user name
@@ -650,7 +631,7 @@ class StreamWrapper {
                 } else {
                     // chown() is not supposed to fail for non-existing UIDs at this point, so $uid
                     // might end up as null
-                    $uid = isset(self::$users[$value]) ? $value : null;
+                    $uid = isset(self::$users[(int) $value]) ? (int) $value : null;
                 }
 
                 if (null === $asset) {
@@ -689,7 +670,7 @@ class StreamWrapper {
                 } else {
                     // chgrp() is not supposed to fail for non-existing GIDs at this point, so $gid
                     // might end up as null
-                    $gid = isset(self::$groups[$value]) ? $value : null;
+                    $gid = isset(self::$groups[(int) $value]) ? (int) $value : null;
                 }
 
                 if (null === $asset) {
@@ -764,11 +745,9 @@ class StreamWrapper {
             return false;
         }
 
-        if ($asset instanceof Directory && $mode->write()) {
+        if ($asset instanceof Directory) {
             $this->warn(sprintf('fopen(%s): failed to open stream. Is a directory', $path));
 
-            return false;
-        } else if ($asset instanceof Directory) {
             return false;
         }
 
@@ -863,7 +842,7 @@ class StreamWrapper {
      * @see https://www.php.net/manual/en/streamwrapper.stream-stat.php
      *
      * @throws RuntimeException
-     * @return array
+     * @return array<array-key,mixed>
      */
     public function stream_stat() : array {
         if (!$this->fileHandle instanceof File) {
@@ -961,7 +940,7 @@ class StreamWrapper {
      *
      * @param string $path The path to check
      * @param int $flags Options
-     * @return bool|array Returns false on failure, or an array with stat data otherwise
+     * @return bool|array<array-key,mixed> Returns false on failure, or an array with stat data otherwise
      */
     public function url_stat(string $path, int $flags) {
         $asset = $this->getAssetFromUrl($path);
@@ -1086,7 +1065,7 @@ class StreamWrapper {
      * Stat an asset
      *
      * @param Asset $asset The asset to stat
-     * @return array
+     * @return array<array-key,mixed>
      */
     private function assetStat(Asset $asset) : array {
         $stat = [

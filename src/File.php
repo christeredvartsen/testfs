@@ -4,59 +4,45 @@ namespace TestFs;
 class File extends Asset {
     /**
      * Contents of the file
-     *
-     * @var string
      */
-    private $content = '';
+    private string $content = '';
 
     /**
      * File size
-     *
-     * @var int
      */
-    private $size = 0;
+    private int $size = 0;
 
     /**
      * Current offset in the file
-     *
-     * @var int
      */
-    private $offset = 0;
+    private int $offset = 0;
 
     /**
      * Identifier of the resource who owns the exclusive lock
-     *
-     * @var ?string
      */
-    private $lockEx;
+    private ?string $lockEx = null;
 
     /**
      * A list of resources who has a shared lock, IDs as key
      *
-     * @var bool[]
+     * @var array<string,bool>
      */
-    private $lockSh;
+    private array $lockSh = [];
 
     /**
      * Whether or not the file was opened with mode 'a'
-     *
-     * @var bool
      */
-    private $append = false;
+    private bool $append = false;
 
     /**
      * Whether or not the file has been opened for reading
-     *
-     * @var bool
      */
-    private $read = true;
+    private bool $read = true;
 
     /**
      * Whether or not the file has been opened for writing
-     *
-     * @var bool
      */
-    private $write = true;
+    private bool $write = true;
 
     /**
      * Class constructor

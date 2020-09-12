@@ -2,22 +2,31 @@
 namespace TestFs;
 
 use TestFs\Exception\InvalidArgumentException;
-use PHPUnit\Framework\TestCase;
 use TestFs\Exception\RuntimeException;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @coversDefaultClass TestFs\StreamWrapper
  */
 class StreamWrapperTest extends TestCase {
-    private $root;
+    private Directory $root;
 
     public function setUp() : void {
-        $this->root = StreamWrapper::init();
+        if (!StreamWrapper::register()) {
+            $this->fail('Unable to register streamwrapper');
+        }
+
+        $root = StreamWrapper::getRoot();
+
+        if (null === $root) {
+            $this->fail('Wrapper has not been properly initialized');
+        }
+
+        $this->root = $root;
     }
 
     public function tearDown() : void {
         StreamWrapper::unregister();
-        $this->root = null;
     }
 
     /**
@@ -39,12 +48,14 @@ class StreamWrapperTest extends TestCase {
     /**
      * @covers ::mkdir
      * @covers ::init
+     * @covers ::getRoot
      * @covers ::register
      * @covers ::unregister
      * @covers ::getRoot
      * @covers ::getAssetFactory
      */
     public function testCanCreateDirectory() : void {
+        $this->assertSame($this->root, StreamWrapper::getRoot());
         $this->assertTrue(mkdir('tfs://foobar'));
         $this->assertTrue($this->root->hasChild('foobar'));
         $this->assertInstanceOf(Directory::class, $this->root->getChild('foobar'));
@@ -55,8 +66,8 @@ class StreamWrapperTest extends TestCase {
      */
     public function testCanCreateDirectoryRecursively() : void {
         $this->assertTrue(mkdir('tfs://foo/bar/baz', 0777, true));
-        $this->assertTrue($this->root->getChild('foo')->getChild('bar')->hasChild('baz'));
-        $this->assertInstanceOf(Directory::class, $this->root->getChild('foo')->getChild('bar')->getChild('baz'));
+        $this->assertTrue($this->root->getChildDirectory('foo')->getChildDirectory('bar')->hasChild('baz'));
+        $this->assertInstanceOf(Directory::class, $this->root->getChildDirectory('foo')->getChildDirectory('bar')->getChild('baz'));
     }
 
     /**
@@ -222,6 +233,9 @@ class StreamWrapperTest extends TestCase {
         opendir('tfs://foo');
     }
 
+    /**
+     * @return array<int,array<string>>
+     */
     public function getUrls() : array {
         return [
             [
@@ -251,6 +265,9 @@ class StreamWrapperTest extends TestCase {
         (new StreamWrapper())->urlToPath('foo://bar');
     }
 
+    /**
+     * @return array<int,array<string>>
+     */
     public function getPaths() : array {
         return [
             [
@@ -478,11 +495,11 @@ class StreamWrapperTest extends TestCase {
      */
     public function testCanCheckForEndOfFile() : void {
         $handle = $this->getHandleForFixture('tfs://foo.txt', 'r', FIXTURES_DIR . '/file.txt');
-        $this->assertSame('this is a test file', trim(fgets($handle)));
+        $this->assertSame('this is a test file', trim((string) fgets($handle)));
         $this->assertFalse(feof($handle), 'Did not expect end of file');
-        $this->assertSame('with multiple', trim(fgets($handle)));
+        $this->assertSame('with multiple', trim((string) fgets($handle)));
         $this->assertFalse(feof($handle), 'Did not expect end of file');
-        $this->assertSame('lines', trim(fgets($handle)));
+        $this->assertSame('lines', trim((string) fgets($handle)));
         $this->assertTrue(feof($handle), 'Expected end of file');
     }
 
@@ -520,6 +537,7 @@ class StreamWrapperTest extends TestCase {
         $fixture = file_get_contents($fixturePath);
         file_put_contents($url, $fixture);
 
+        /** @var resource */
         return fopen($url, $mode);
     }
 
@@ -561,7 +579,7 @@ class StreamWrapperTest extends TestCase {
     /**
      * @covers ::stream_open
      */
-    public function testFopenFailsWhenOpeningADirectoryForWriting() : void {
+    public function testFopenFailsWhenOpeningADirectory() : void {
         mkdir('tfs://foo');
         $this->assertFalse(@fopen('tfs://foo', 'w'));
 
@@ -627,6 +645,7 @@ class StreamWrapperTest extends TestCase {
         $handle = fopen('tfs://foo.txt', 'w');
         $this->assertTrue(flock($handle, LOCK_EX | LOCK_NB), 'Expected to get exclusive lock');
 
+        /** @var File */
         $file = $this->root->getChild('foo.txt');
 
         $this->assertTrue($file->isLocked(), 'Expected file to be locked');
@@ -694,9 +713,11 @@ class StreamWrapperTest extends TestCase {
         $this->assertTrue(chmod('tfs://foo', 0644));
         $this->assertTrue(chmod('tfs://foo/bar.txt', 0600));
 
+        /** @var Directory */
         $foo = $this->root->getChild('foo');
         $this->assertSame(0644, $foo->getMode());
 
+        /** @var File */
         $bar = $foo->getChild('bar.txt');
         $this->assertSame(0600, $bar->getMode());
     }
@@ -718,6 +739,7 @@ class StreamWrapperTest extends TestCase {
     public function testTouchSupportsCustomTimes() : void {
         touch('tfs://file.txt', 123, 456);
 
+        /** @var File */
         $file = $this->root->getChild('file.txt');
         $this->assertSame(123, $file->getLastModified());
         $this->assertSame(456, $file->getLastAccessed());
@@ -832,6 +854,8 @@ class StreamWrapperTest extends TestCase {
      */
     public function testCanChangeAssetOwnerAndGroup() : void {
         touch('tfs://file.txt');
+
+        /** @var File */
         $asset = $this->root->getChild('file.txt');
 
         StreamWrapper::addUser(1, 'user1');
@@ -1024,6 +1048,22 @@ class StreamWrapperTest extends TestCase {
     }
 
     /**
+     * @covers ::stream_metadata
+     * @covers ::userIsInGroup
+     */
+    public function testCanNotChangeToGroupWhenGroupIsEmpty() : void {
+        StreamWrapper::addUser(1, 'user1');
+        StreamWrapper::addGroup(1, 'group1');
+        StreamWrapper::setUid(1);
+
+        $this->assertTrue(touch('tfs://file.txt'), 'Expected touch to succeed');
+
+        $this->expectWarning();
+        $this->expectWarningMessage('chgrp(): Operation not permitted');
+        chgrp('tfs://file.txt', 'group1');
+    }
+
+    /**
      * @covers ::dir_readdir
      */
     public function testThrowsExceptionOnMissingDirectoryIteratorWhenReading() : void {
@@ -1109,14 +1149,5 @@ class StreamWrapperTest extends TestCase {
     public function testThrowsExceptionOnMissingFileHandleWhenWritingToStream() : void {
         $this->expectExceptionObject(new RuntimeException('Invalid file handle'));
         (new StreamWrapper())->stream_write('some data');
-    }
-
-    /**
-     * @covers ::getAsset
-     */
-    public function testSomething() : void {
-        mkdir('tfs://foo/bar/baz', 0777, true);
-        rmdir('tfs://foo/bar/baz');
-        $this->assertSame(1, 1);
     }
 }

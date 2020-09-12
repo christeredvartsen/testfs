@@ -1,13 +1,22 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
-use TestFs\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @coversDefaultClass TestFs\File
  */
 class FileTest extends TestCase {
+    /**
+     * @covers ::getType
+     */
+    public function testCanGetFileType() : void {
+        $this->assertSame(0100000, (new File('name'))->getType(), 'Incorrect file type');
+    }
+
+    /**
+     * @return array<int,array<mixed>>
+     */
     public function getFileContent() : array {
         return [
             ['some content', 12],
@@ -23,13 +32,22 @@ class FileTest extends TestCase {
         $this->assertSame($expectedSize, (new File('name', $content))->getSize(), 'Incorrect size');
     }
 
+    /**
+     * @return array<string,array<mixed>>
+     */
     public function getContentForReading() : array {
         return [
             'empty file' => [
-                '', 10, '', 0
+                'content'        => '',
+                'bytes'          => 10,
+                'expectedOutput' => '',
+                'expectedOffset' => 0
             ],
             'file with contents' => [
-                'this is some data', 7, 'this is', 7
+                'content'        => 'this is some data',
+                'bytes'          => 7,
+                'expectedOutput' => 'this is',
+                'expectedOffset' => 7
             ]
         ];
     }
@@ -55,19 +73,22 @@ class FileTest extends TestCase {
         $this->assertTrue($file->eof(), 'Expected EOF');
     }
 
+    /**
+     * @return array<string,array<mixed>>
+     */
     public function getContentForWriting() : array {
         return [
             'empty string' => [
-                'existing content',
-                0,
-                '',
-                'existing content',
+                'existingContent' => 'existing content',
+                'newDataLength'   => 0,
+                'newData'         => '',
+                'newContent'      => 'existing content',
             ],
             'write some data' => [
-                'exsiting content',
-                9,
-                'some data',
-                'some datacontent',
+                'existingContent' => 'exsiting content',
+                'newDataLength'   => 9,
+                'newData'         => 'some data',
+                'newContent'      => 'some datacontent',
             ],
         ];
     }
@@ -86,27 +107,30 @@ class FileTest extends TestCase {
         $this->assertSame($newContent, $file->getContent(), 'Incorrect content after writing');
     }
 
+    /**
+     * @return array<string,array<mixed>>
+     */
     public function getDataForTruncate() : array {
         return [
             'truncate empty file' => [
-                '',
-                0,
-                '',
+                'existingContent' => '',
+                'size'            => 0,
+                'expectedContent' => '',
             ],
             'truncate file with contents' => [
-                'existing content',
-                0,
-                '',
+                'existingContent' => 'existing content',
+                'size'            => 0,
+                'expectedContent' => '',
             ],
             'truncate to larger size' => [
-                'content',
-                10,
-                "content\0\0\0",
+                'existingContent' => 'content',
+                'size'            => 10,
+                'expectedContent' => "content\0\0\0",
             ],
             'truncate to smaller size and rewind' => [
-                'content',
-                4,
-                'cont',
+                'existingContent' => 'content',
+                'size'            => 4,
+                'expectedContent' => 'cont',
             ],
         ];
     }
@@ -122,28 +146,31 @@ class FileTest extends TestCase {
         $this->assertSame(0, $file->getOffset(), 'Offset is not supposed to be changed');
     }
 
+    /**
+     * @return array<string,array<mixed>>
+     */
     public function getDataForSeek() : array {
         return [
             'set' => [
-                'file content',
-                5,
-                SEEK_SET,
-                5,
-                'file content',
+                'content'         => 'file content',
+                'seek'            => 5,
+                'whence'          => SEEK_SET,
+                'expectedOffset'  => 5,
+                'expectedContent' => 'file content',
             ],
             'cur' => [
-                'file content',
-                3,
-                SEEK_CUR,
-                3,
-                'file content',
+                'content'         => 'file content',
+                'seek'            => 3,
+                'whence'          => SEEK_CUR,
+                'expectedOffset'  => 3,
+                'expectedContent' => 'file content',
             ],
             'end' => [
-                'file content',
-                3,
-                SEEK_END,
-                15,
-                "file content\0\0\0",
+                'content'         => 'file content',
+                'seek'            => 3,
+                'whence'          => SEEK_END,
+                'expectedOffset'  => 15,
+                'expectedContent' => "file content\0\0\0",
             ],
         ];
     }

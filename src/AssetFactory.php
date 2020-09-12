@@ -1,6 +1,9 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
+/**
+ * @codeCoverageIgnore
+ */
 class AssetFactory {
     /**
      * Create a directory asset

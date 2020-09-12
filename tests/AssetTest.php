@@ -84,10 +84,19 @@ class AssetTest extends TestCase {
         $this->assertSame('newname', $asset->getName(), 'Incorrect name');
     }
 
+    /**
+     * @return array<string,array<string,string>>
+     */
     public function getInvalidAssetNames() : array {
         return [
-            'empty name' => [' ', 'Name can not be empty'],
-            'dir separators' => ['foo/bar', 'Name can not contain a directory separator'],
+            'empty name' => [
+                'name'             => ' ',
+                'exceptionMessage' => 'Name can not be empty',
+            ],
+            'dir separators' => [
+                'name'             => 'foo/bar',
+                'exceptionMessage' => 'Name can not contain a directory separator',
+            ],
         ];
     }
 
@@ -207,17 +216,20 @@ class AssetTest extends TestCase {
      * @covers ::detach
      */
     public function testCanDetachFromParent() : void {
-        $dir = new Directory('name');
+        $dir = $this->createMock(Directory::class);
+        $dir
+            ->expects($this->once())
+            ->method('removeChild');
+
         $file = new File('name');
-        $dir->addChild($file);
+        $file->setParent($dir);
 
         $file->detach();
 
         $this->assertNull($file->getParent(), 'Did not expect parent to exist');
-        $this->assertNull($dir->getChild('name'), 'Did not expect child to exist');
 
         // Call again to make sure an error does not occur when detaching an already detached asset
-        $this->assertNull($file->detach(), 'Did not expect method to return anything');
+        $file->detach();
     }
 
     /**
@@ -246,9 +258,12 @@ class AssetTest extends TestCase {
 
         $file = new File('name');
         $file->setParent($directory);
-        $this->assertNull($file->setParent($directory), 'Did not expect method to return anything');
+        $file->setParent($directory);
     }
 
+    /**
+     * @return array<string,array<string,mixed>>
+     */
     public function getAccessCheckDataForReadable() : array {
         return [
             'root user' => [
@@ -334,6 +349,9 @@ class AssetTest extends TestCase {
         $this->assertFalse($file->isReadable(2, 2), 'Did not expect user to be able to read');
     }
 
+    /**
+     * @return array<string,array<string,mixed>>
+     */
     public function getAccessCheckDataForWritable() : array {
         return [
             'root user' => [
@@ -400,6 +418,9 @@ class AssetTest extends TestCase {
         $this->assertSame($expectedResult, $file->isWritable($checkUid, $checkGid), 'Wrong result for isWritable');
     }
 
+    /**
+     * @return array<string,array<string,mixed>>
+     */
     public function getAccessCheckDataForExecutable() : array {
         return [
             'root user' => [

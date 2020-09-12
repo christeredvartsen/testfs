@@ -1,4 +1,0 @@
-parameters:
-    checkMissingIterableValueType: false
-    excludes_analyse:
-        - src/functions.php
