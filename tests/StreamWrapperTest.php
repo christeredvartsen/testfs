@@ -12,7 +12,17 @@ class StreamWrapperTest extends TestCase {
     private Directory $root;
 
     public function setUp() : void {
-        $this->root = StreamWrapper::init();
+        if (!StreamWrapper::register()) {
+            $this->fail('Unable to register streamwrapper');
+        }
+
+        $root = StreamWrapper::getRoot();
+
+        if (null === $root) {
+            $this->fail('Wrapper has not been properly initialized');
+        }
+
+        $this->root = $root;
     }
 
     public function tearDown() : void {

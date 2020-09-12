@@ -223,18 +223,6 @@ class StreamWrapper {
     }
 
     /**
-     * Initialize the stream wrapper with default options and return the root directory
-     *
-     * @return Directory
-     */
-    public static function init() : Directory {
-        self::register();
-
-        /** @var Directory */
-        return self::$root;
-    }
-
-    /**
      * Un-register the stream wrapper and destroy the filesystem root
      *
      * @see https://www.php.net/manual/en/function.stream-wrapper-unregister.php
@@ -254,7 +242,7 @@ class StreamWrapper {
     /**
      * Get the filesystem root
      *
-     * @return Directory|null
+     * @return ?Directory
      */
     public static function getRoot() : ?Directory {
         return self::$root;
