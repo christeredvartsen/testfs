@@ -4,7 +4,12 @@
 
 Virtual filesystem for PHP for use with testing, implemented using a stream wrapper.
 
+## Requirements
+
+This library requires PHP >= 7.4.
+
 ## Installation
+
 Install using [Composer](https://getcomposer.org):
 
 ```
@@ -12,6 +17,7 @@ composer install christeredvartsen/testfs
 ```
 
 ## Usage
+
 To enable the stream wrapper you must first register it:
 
 ```php
@@ -27,6 +33,7 @@ $root = TestFs\StreamWrapper::getRoot();
 ```
 
 ## Development
+
 ```
 git clone git@github.com:christeredvartsen/testfs.git
 composer install
