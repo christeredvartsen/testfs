@@ -45,4 +45,13 @@ class RootDirectory extends Directory {
 
         return $this->diskSize - $this->getSize();
     }
+
+    /**
+     * Return self when getting the root directory
+     *
+     * @return RootDirectory
+     */
+    public function getRootDirectory(): RootDirectory {
+        return $this;
+    }
 }

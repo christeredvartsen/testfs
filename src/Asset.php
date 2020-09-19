@@ -258,6 +258,15 @@ abstract class Asset {
     }
 
     /**
+     * Get the root directory of the file system
+     *
+     * @return ?RootDirectory
+     */
+    public function getRootDirectory() : ?RootDirectory {
+        return null === $this->parent ? null : $this->parent->getRootDirectory();
+    }
+
+    /**
      * Set the mode
      *
      * @param int $mode The mode to set

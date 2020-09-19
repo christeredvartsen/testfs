@@ -497,4 +497,32 @@ class AssetTest extends TestCase {
         $this->assertFalse($asset->isOwnedByUser(0), 'Did not expect UID 0 to own the asset');
         $this->assertTrue($asset->isOwnedByUser(1), 'Expected UID 1 to own the asset');
     }
+
+    /**
+     * @covers ::getRootDirectory
+     * @covers TestFs\RootDirectory::getRootDirectory
+     */
+    public function testCanGetRootDirectory() : void {
+        $file = new File('name');
+        $dir  = new Directory('name');
+        $root = new RootDirectory('some name');
+        $dir->addChild($file);
+        $root->addChild($dir);
+
+        $this->assertSame($root, $file->getRootDirectory(), 'Incorrect instance returned');
+        $this->assertSame($root, $dir->getRootDirectory(), 'Incorrect instance returned');
+        $this->assertSame($root, $root->getRootDirectory(), 'Incorrect instance returned');
+    }
+
+    /**
+     * @covers ::getRootDirectory
+     */
+    public function testReturnNullIfThereIsNoRootDirectory() : void {
+        $file = new File('name');
+        $dir  = new Directory('name');
+        $dir->addChild($file);
+
+        $this->assertNull($file->getRootDirectory(), 'Did not expect any root directory');
+        $this->assertNull($dir->getRootDirectory(), 'Did not expect any root directory');
+    }
 }
