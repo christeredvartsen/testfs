@@ -16,9 +16,9 @@ class StreamWrapper {
     /**
      * Root asset
      *
-     * @var ?Directory
+     * @var ?RootDirectory
      */
-    private static ?Directory $root;
+    private static ?RootDirectory $root;
 
     /**
      * Wrapper protocol
@@ -74,7 +74,7 @@ class StreamWrapper {
      */
     private static array $defaultGroups = [
         0 => [
-            'name' => 'root',
+            'name'    => 'root',
             'members' => [0],
         ],
     ];
@@ -217,7 +217,7 @@ class StreamWrapper {
         self::setUid($uid);
         self::setGid($gid);
 
-        self::$root = new Directory(self::$rootDirectoryName);
+        self::$root = new RootDirectory(self::$rootDirectoryName);
 
         return stream_wrapper_register(self::$protocol, self::class);
     }
@@ -240,11 +240,11 @@ class StreamWrapper {
     }
 
     /**
-     * Get the filesystem root
+     * Get the filesystem root directory
      *
-     * @return ?Directory
+     * @return ?RootDirectory
      */
-    public static function getRoot() : ?Directory {
+    public static function getRoot() : ?RootDirectory {
         return self::$root;
     }
 
@@ -384,7 +384,7 @@ class StreamWrapper {
     public function mkdir(string $path, int $mode, int $options) : bool {
         $path = $this->urlToPath($path);
 
-        /** @var Directory */
+        /** @var RootDirectory */
         $current = self::$root;
 
         $dirs = array_filter(explode('/', $path));
@@ -1007,13 +1007,13 @@ class StreamWrapper {
      * Given "foo/bar/baz.txt" this method will return the "foo/bar" directory, if it exists.
      *
      * @param string $path The path to get the parent of
-     * @return Directory|null Returns null if the asset does not exist
+     * @return Directory|RootDirectory|null Returns null if the asset does not exist
      */
-    private function getAssetParent(string $path) : ?Directory {
+    private function getAssetParent(string $path) {
         $parentPath = implode('/', array_slice(explode('/', $path), 0, -1));
 
         if ($parentPath) {
-            /** @var Directory */
+            /** @var Directory|RootDirectory */
             $parent = $this->getAsset($parentPath);
         } else {
             $parent = self::$root;

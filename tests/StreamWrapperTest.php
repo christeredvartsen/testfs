@@ -47,7 +47,6 @@ class StreamWrapperTest extends TestCase {
 
     /**
      * @covers ::mkdir
-     * @covers ::init
      * @covers ::getRoot
      * @covers ::register
      * @covers ::unregister
