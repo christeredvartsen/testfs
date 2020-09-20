@@ -4,10 +4,12 @@ namespace TestFs;
 use TestFs\Exception\InvalidArgumentException;
 
 class Disk extends Directory {
+    const UNLIMITED_DISK_SIZE = -1;
+
     /**
      * Available storage space
      */
-    private int $diskSize = -1;
+    private int $diskSize = self::UNLIMITED_DISK_SIZE;
 
     /**
      * Set the disk size in bytes
@@ -21,7 +23,7 @@ class Disk extends Directory {
             throw new InvalidArgumentException('Size of the files in the virtual filesystem already exceeds the given size');
         }
 
-        $this->diskSize = max(-1, $size);
+        $this->diskSize = max(self::UNLIMITED_DISK_SIZE, $size);
     }
 
     /**
@@ -39,8 +41,8 @@ class Disk extends Directory {
      * @return int
      */
     public function getAvailableSize() : int {
-        if (-1 === $this->diskSize) {
-            return -1;
+        if (self::UNLIMITED_DISK_SIZE === $this->diskSize) {
+            return self::UNLIMITED_DISK_SIZE;
         }
 
         return $this->diskSize - $this->getSize();

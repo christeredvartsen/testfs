@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
+use TestFs\Exception\DiskSpaceException;
 use TestFs\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
@@ -154,6 +155,17 @@ TREE;
 
         $this->expectExceptionObject(new InvalidArgumentException('Unsupported asset type: TestFs\UnsupportedAsset'));
         $dir->addChild(new UnsupportedAsset('name'));
+    }
+
+    /**
+     * @covers ::addChild
+     */
+    public function testThrowsExceptionWhenAddingChildWithNoSpaceLeftOnDisk() : void {
+        $disk = new Disk('name');
+        $disk->setDiskSize(1);
+
+        $this->expectExceptionObject(new DiskSpaceException('There is not enough space on the disk to add the asset, available: 1 byte, asset: 18 bytes'));
+        $disk->addChild(new File('name', 'this is my content'));
     }
 }
 

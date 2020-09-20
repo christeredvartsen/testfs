@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
+use TestFs\Exception\DiskSpaceException;
 use TestFs\Exception\InvalidArgumentException;
 
 class Directory extends Asset {
@@ -120,11 +121,29 @@ class Directory extends Asset {
      *
      * @param Asset $asset The child to add
      * @throws InvalidArgumentException Throws an exception if a child with the same name exists
+     * @throws DiskSpaceException Thrown if there is not enough space on the disk to add the asset
      * @return void
      */
     public function addChild(Asset $asset) : void {
         if (!$asset instanceof File && !$asset instanceof Directory) {
             throw new InvalidArgumentException(sprintf('Unsupported asset type: %s', get_class($asset)));
+        }
+
+        $disk = $this->getDisk();
+
+        if (null !== $disk) {
+            $assetSize     = $asset->getSize();
+            $availablesize = $disk->getAvailableSize();
+
+            if ($availablesize !== Disk::UNLIMITED_DISK_SIZE && $assetSize > $availablesize) {
+                throw new DiskSpaceException(sprintf(
+                    'There is not enough space on the disk to add the asset, available: %d byte%s, asset: %d byte%s',
+                    $availablesize,
+                    1 !== $availablesize ? 's' : '',
+                    $assetSize,
+                    1 !== $assetSize ? 's' : '',
+                ));
+            }
         }
 
         $name = $asset->getName();

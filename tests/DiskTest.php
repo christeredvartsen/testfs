@@ -14,7 +14,7 @@ class DiskTest extends TestCase {
      */
     public function testCanSetAndGetDiskSize() : void {
         $dir = new Disk('name');
-        $this->assertSame(-1, $dir->getDiskSize(), 'Unexpected default disk size');
+        $this->assertSame(Disk::UNLIMITED_DISK_SIZE, $dir->getDiskSize(), 'Unexpected default disk size');
         $dir->setDiskSize(123);
         $this->assertSame(123, $dir->getDiskSize(), 'Expected disk size to be updated');
     }
@@ -35,7 +35,7 @@ class DiskTest extends TestCase {
      */
     public function testCanGetAvailableSize() : void {
         $dir = new Disk('name');
-        $this->assertSame(-1, $dir->getAvailableSize(), 'Unexpected available disk size');
+        $this->assertSame(Disk::UNLIMITED_DISK_SIZE, $dir->getAvailableSize(), 'Unexpected available disk size');
         $dir->setDiskSize(20);
         $dir->addChild(new File('name', 'this is my content'));
         $this->assertSame(2, $dir->getAvailableSize(), 'Unexpected available disk size');
