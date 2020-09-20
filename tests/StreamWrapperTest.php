@@ -9,20 +9,20 @@ use PHPUnit\Framework\TestCase;
  * @coversDefaultClass TestFs\StreamWrapper
  */
 class StreamWrapperTest extends TestCase {
-    private Directory $root;
+    private Disk $disk;
 
     public function setUp() : void {
         if (!StreamWrapper::register()) {
             $this->fail('Unable to register streamwrapper');
         }
 
-        $root = StreamWrapper::getRoot();
+        $disk = StreamWrapper::getDisk();
 
-        if (null === $root) {
+        if (null === $disk) {
             $this->fail('Wrapper has not been properly initialized');
         }
 
-        $this->root = $root;
+        $this->disk = $disk;
     }
 
     public function tearDown() : void {
@@ -47,17 +47,16 @@ class StreamWrapperTest extends TestCase {
 
     /**
      * @covers ::mkdir
-     * @covers ::getRoot
+     * @covers ::getDisk
      * @covers ::register
      * @covers ::unregister
-     * @covers ::getRoot
      * @covers ::getAssetFactory
      */
     public function testCanCreateDirectory() : void {
-        $this->assertSame($this->root, StreamWrapper::getRoot());
+        $this->assertSame($this->disk, StreamWrapper::getDisk());
         $this->assertTrue(mkdir('tfs://foobar'));
-        $this->assertTrue($this->root->hasChild('foobar'));
-        $this->assertInstanceOf(Directory::class, $this->root->getChild('foobar'));
+        $this->assertTrue($this->disk->hasChild('foobar'));
+        $this->assertInstanceOf(Directory::class, $this->disk->getChild('foobar'));
     }
 
     /**
@@ -65,8 +64,8 @@ class StreamWrapperTest extends TestCase {
      */
     public function testCanCreateDirectoryRecursively() : void {
         $this->assertTrue(mkdir('tfs://foo/bar/baz', 0777, true));
-        $this->assertTrue($this->root->getChildDirectory('foo')->getChildDirectory('bar')->hasChild('baz'));
-        $this->assertInstanceOf(Directory::class, $this->root->getChildDirectory('foo')->getChildDirectory('bar')->getChild('baz'));
+        $this->assertTrue($this->disk->getChildDirectory('foo')->getChildDirectory('bar')->hasChild('baz'));
+        $this->assertInstanceOf(Directory::class, $this->disk->getChildDirectory('foo')->getChildDirectory('bar')->getChild('baz'));
     }
 
     /**
@@ -98,8 +97,8 @@ class StreamWrapperTest extends TestCase {
     public function testCanCreateDirsWhenSomeDirsExist() : void {
         $this->assertTrue(mkdir('tfs://foo'));
         $this->assertTrue(mkdir('tfs://foo/bar'));
-        $this->assertTrue($this->root->getChild('foo')->hasChild('bar'));
-        $this->assertInstanceOf(Directory::class, $this->root->getChild('foo')->getChild('bar'));
+        $this->assertTrue($this->disk->getChild('foo')->hasChild('bar'));
+        $this->assertInstanceOf(Directory::class, $this->disk->getChild('foo')->getChild('bar'));
     }
 
     /**
@@ -107,9 +106,9 @@ class StreamWrapperTest extends TestCase {
      */
     public function testCanRemoveDir() : void {
         $this->assertTrue(mkdir('tfs://foo'));
-        $this->assertTrue($this->root->hasChild('foo'));
+        $this->assertTrue($this->disk->hasChild('foo'));
         $this->assertTrue(rmdir('tfs://foo'));
-        $this->assertFalse($this->root->hasChild('foo'));
+        $this->assertFalse($this->disk->hasChild('foo'));
     }
 
     /**
@@ -391,10 +390,10 @@ class StreamWrapperTest extends TestCase {
     }
 
     /**
-     * @covers ::getRootDirectoryName
+     * @covers ::getDiskName
      */
-    public function testCanGetRootDirectoryName() : void {
-        $this->assertSame('<root>', StreamWrapper::getRootDirectoryName());
+    public function testCanGetDiskName() : void {
+        $this->assertSame('<disk>', StreamWrapper::getDiskName());
     }
 
     /**
@@ -453,14 +452,14 @@ class StreamWrapperTest extends TestCase {
         $this->assertTrue(touch('tfs://origin.txt'));
         $this->assertTrue(touch('tfs://target.txt'));
 
-        $target = $this->root->getChild('target.txt');
+        $target = $this->disk->getChild('target.txt');
 
-        $this->assertSame($this->root, $target->getParent());
+        $this->assertSame($this->disk, $target->getParent());
         $this->assertTrue(rename('tfs://origin.txt', 'tfs://target.txt'), 'Expected rename to succeed');
         $this->assertNull($target->getParent(), 'Expected old target to get detached');
-        $this->assertNull($this->root->getChild('origin.txt'), 'Expected origin to be gone');
+        $this->assertNull($this->disk->getChild('origin.txt'), 'Expected origin to be gone');
 
-        $newTarget = $this->root->getChild('target.txt');
+        $newTarget = $this->disk->getChild('target.txt');
 
         $this->assertNotSame($target, $newTarget, 'Did not expect the old target to be the same as the new target');
     }
@@ -479,13 +478,13 @@ class StreamWrapperTest extends TestCase {
 
         $this->assertTrue(rename('tfs://foo', 'tfs://foobar'));
 
-        $this->assertFalse($this->root->hasChild('foo'), '/foo should not exist');
-        $this->assertTrue($this->root->hasChild('foobar'), '/foobar should exist');
+        $this->assertFalse($this->disk->hasChild('foo'), '/foo should not exist');
+        $this->assertTrue($this->disk->hasChild('foobar'), '/foobar should exist');
 
         $this->assertTrue(rename('tfs://bar', 'tfs://baz/barfoo'));
 
-        $this->assertFalse($this->root->hasChild('bar'), '/bar should not exist');
-        $this->assertTrue($this->root->getChild('baz')->hasChild('barfoo'), '/baz/barfoo should exist');
+        $this->assertFalse($this->disk->hasChild('bar'), '/bar should not exist');
+        $this->assertTrue($this->disk->getChild('baz')->hasChild('barfoo'), '/baz/barfoo should exist');
     }
 
     /**
@@ -645,7 +644,7 @@ class StreamWrapperTest extends TestCase {
         $this->assertTrue(flock($handle, LOCK_EX | LOCK_NB), 'Expected to get exclusive lock');
 
         /** @var File */
-        $file = $this->root->getChild('foo.txt');
+        $file = $this->disk->getChild('foo.txt');
 
         $this->assertTrue($file->isLocked(), 'Expected file to be locked');
     }
@@ -713,7 +712,7 @@ class StreamWrapperTest extends TestCase {
         $this->assertTrue(chmod('tfs://foo/bar.txt', 0600));
 
         /** @var Directory */
-        $foo = $this->root->getChild('foo');
+        $foo = $this->disk->getChild('foo');
         $this->assertSame(0644, $foo->getMode());
 
         /** @var File */
@@ -739,7 +738,7 @@ class StreamWrapperTest extends TestCase {
         touch('tfs://file.txt', 123, 456);
 
         /** @var File */
-        $file = $this->root->getChild('file.txt');
+        $file = $this->disk->getChild('file.txt');
         $this->assertSame(123, $file->getLastModified());
         $this->assertSame(456, $file->getLastAccessed());
     }
@@ -855,7 +854,7 @@ class StreamWrapperTest extends TestCase {
         touch('tfs://file.txt');
 
         /** @var File */
-        $asset = $this->root->getChild('file.txt');
+        $asset = $this->disk->getChild('file.txt');
 
         StreamWrapper::addUser(1, 'user1');
         StreamWrapper::addUser(2, 'user2');

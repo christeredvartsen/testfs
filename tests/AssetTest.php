@@ -499,30 +499,30 @@ class AssetTest extends TestCase {
     }
 
     /**
-     * @covers ::getRootDirectory
-     * @covers TestFs\RootDirectory::getRootDirectory
+     * @covers ::getDisk
+     * @covers TestFs\Disk::getDisk
      */
-    public function testCanGetRootDirectory() : void {
+    public function testCanGetDisk() : void {
         $file = new File('name');
         $dir  = new Directory('name');
-        $root = new RootDirectory('some name');
+        $disk = new Disk('some name');
         $dir->addChild($file);
-        $root->addChild($dir);
+        $disk->addChild($dir);
 
-        $this->assertSame($root, $file->getRootDirectory(), 'Incorrect instance returned');
-        $this->assertSame($root, $dir->getRootDirectory(), 'Incorrect instance returned');
-        $this->assertSame($root, $root->getRootDirectory(), 'Incorrect instance returned');
+        $this->assertSame($disk, $file->getDisk(), 'Incorrect instance returned');
+        $this->assertSame($disk, $dir->getDisk(), 'Incorrect instance returned');
+        $this->assertSame($disk, $disk->getDisk(), 'Incorrect instance returned');
     }
 
     /**
-     * @covers ::getRootDirectory
+     * @covers ::getDisk
      */
-    public function testReturnNullIfThereIsNoRootDirectory() : void {
+    public function testReturnNullIfThereIsNoDisk() : void {
         $file = new File('name');
         $dir  = new Directory('name');
         $dir->addChild($file);
 
-        $this->assertNull($file->getRootDirectory(), 'Did not expect any root directory');
-        $this->assertNull($dir->getRootDirectory(), 'Did not expect any root directory');
+        $this->assertNull($file->getDisk(), 'Did not expect any disk');
+        $this->assertNull($dir->getDisk(), 'Did not expect any disk');
     }
 }

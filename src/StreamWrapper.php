@@ -14,11 +14,11 @@ class StreamWrapper {
     public $context;
 
     /**
-     * Root asset
+     * Disk asset
      *
-     * @var ?RootDirectory
+     * @var ?Disk
      */
-    private static ?RootDirectory $root;
+    private static ?Disk $disk;
 
     /**
      * Wrapper protocol
@@ -26,9 +26,9 @@ class StreamWrapper {
     private static string $protocol = 'tfs';
 
     /**
-     * Name of the root Directory instance
+     * Name of the disk instance
      */
-    private static string $rootDirectoryName = '<root>';
+    private static string $diskName = '<disk>';
 
     /**
      * Asset factory
@@ -184,16 +184,16 @@ class StreamWrapper {
     }
 
     /**
-     * Get the root directory name
+     * Get the disk name
      *
      * @return string
      */
-    public static function getRootDirectoryName() : string {
-        return self::$rootDirectoryName;
+    public static function getDiskName() : string {
+        return self::$diskName;
     }
 
     /**
-     * Register the stream wrapper and create the filesystem root
+     * Register the stream wrapper and create the filesystem disk
      *
      * @see https://www.php.net/manual/en/function.stream-wrapper-register.php
      *
@@ -217,20 +217,20 @@ class StreamWrapper {
         self::setUid($uid);
         self::setGid($gid);
 
-        self::$root = new RootDirectory(self::$rootDirectoryName);
+        self::$disk = new Disk(self::$diskName);
 
         return stream_wrapper_register(self::$protocol, self::class);
     }
 
     /**
-     * Un-register the stream wrapper and destroy the filesystem root
+     * Un-register the stream wrapper and destroy the filesystem disk
      *
      * @see https://www.php.net/manual/en/function.stream-wrapper-unregister.php
      *
      * @return bool True on success, false otherwise
      */
     public static function unregister() : bool {
-        self::$root   = null;
+        self::$disk   = null;
         self::$uid    = 0;
         self::$gid    = 0;
         self::$users  = [];
@@ -240,12 +240,12 @@ class StreamWrapper {
     }
 
     /**
-     * Get the filesystem root directory
+     * Get the filesystem disk
      *
-     * @return ?RootDirectory
+     * @return ?Disk
      */
-    public static function getRoot() : ?RootDirectory {
-        return self::$root;
+    public static function getDisk() : ?Disk {
+        return self::$disk;
     }
 
     /**
@@ -384,8 +384,8 @@ class StreamWrapper {
     public function mkdir(string $path, int $mode, int $options) : bool {
         $path = $this->urlToPath($path);
 
-        /** @var RootDirectory */
-        $current = self::$root;
+        /** @var Disk */
+        $current = self::$disk;
 
         $dirs = array_filter(explode('/', $path));
         $numParts = count($dirs);
@@ -580,7 +580,6 @@ class StreamWrapper {
      * Get stream metadata
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-metadata.php
-     * @todo Check permissions
      *
      * @param string $path The path to operate on
      * @param int $option The option to use
@@ -912,7 +911,7 @@ class StreamWrapper {
         $asset = $this->getAsset($path);
 
         /** @var Directory */
-        $parent = null !== $asset ? $asset->getParent() : self::$root;
+        $parent = null !== $asset ? $asset->getParent() : self::$disk;
 
         if (null === $asset) {
             $this->warn(sprintf('unlink(%s): No such file or directory', $path));
@@ -982,7 +981,7 @@ class StreamWrapper {
      */
     private function getAsset(string $path) {
         $parts = array_filter(explode('/', $path));
-        $current = self::$root;
+        $current = self::$disk;
 
         foreach ($parts as $part) {
             if (!$current instanceof Directory) {
@@ -1007,16 +1006,16 @@ class StreamWrapper {
      * Given "foo/bar/baz.txt" this method will return the "foo/bar" directory, if it exists.
      *
      * @param string $path The path to get the parent of
-     * @return Directory|RootDirectory|null Returns null if the asset does not exist
+     * @return Directory|Disk|null Returns null if the asset does not exist
      */
     private function getAssetParent(string $path) {
         $parentPath = implode('/', array_slice(explode('/', $path), 0, -1));
 
         if ($parentPath) {
-            /** @var Directory|RootDirectory */
+            /** @var Directory|Disk */
             $parent = $this->getAsset($parentPath);
         } else {
-            $parent = self::$root;
+            $parent = self::$disk;
         }
 
         return $parent;

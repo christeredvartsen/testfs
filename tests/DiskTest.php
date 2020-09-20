@@ -5,15 +5,15 @@ use TestFs\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @coversDefaultClass TestFs\RootDirectory
+ * @coversDefaultClass TestFs\Disk
  */
-class RootDirectoryTest extends TestCase {
+class DiskTest extends TestCase {
     /**
      * @covers ::getDiskSize
      * @covers ::setDiskSize
      */
     public function testCanSetAndGetDiskSize() : void {
-        $dir = new RootDirectory('name');
+        $dir = new Disk('name');
         $this->assertSame(-1, $dir->getDiskSize(), 'Unexpected default disk size');
         $dir->setDiskSize(123);
         $this->assertSame(123, $dir->getDiskSize(), 'Expected disk size to be updated');
@@ -23,7 +23,7 @@ class RootDirectoryTest extends TestCase {
      * @covers ::setDiskSize
      */
     public function testThrowsExceptionWhenSettingSizeTooSmall() : void {
-        $dir = new RootDirectory('name');
+        $dir = new Disk('name');
         $dir->addChild(new File('name', 'this is my content'));
 
         $this->expectExceptionObject(new InvalidArgumentException('Size of the files in the virtual filesystem already exceeds the given size'));
@@ -34,7 +34,7 @@ class RootDirectoryTest extends TestCase {
      * @covers ::getAvailableSize
      */
     public function testCanGetAvailableSize() : void {
-        $dir = new RootDirectory('name');
+        $dir = new Disk('name');
         $this->assertSame(-1, $dir->getAvailableSize(), 'Unexpected available disk size');
         $dir->setDiskSize(20);
         $dir->addChild(new File('name', 'this is my content'));

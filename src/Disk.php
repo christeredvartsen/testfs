@@ -3,7 +3,7 @@ namespace TestFs;
 
 use TestFs\Exception\InvalidArgumentException;
 
-class RootDirectory extends Directory {
+class Disk extends Directory {
     /**
      * Available storage space
      */
@@ -49,9 +49,9 @@ class RootDirectory extends Directory {
     /**
      * Return self when getting the root directory
      *
-     * @return RootDirectory
+     * @return Disk
      */
-    public function getRootDirectory(): RootDirectory {
+    public function getDisk(): Disk {
         return $this;
     }
 }

@@ -258,12 +258,12 @@ abstract class Asset {
     }
 
     /**
-     * Get the root directory of the file system
+     * Get the file system disk
      *
-     * @return ?RootDirectory
+     * @return ?Disk
      */
-    public function getRootDirectory() : ?RootDirectory {
-        return null === $this->parent ? null : $this->parent->getRootDirectory();
+    public function getDisk() : ?Disk {
+        return null === $this->parent ? null : $this->parent->getDisk();
     }
 
     /**

@@ -180,7 +180,7 @@ class Directory extends Asset {
      */
     public function tree(array $prefix = [], int &$numFiles = 0, int &$numDirectories = 1) : string {
         $first = empty($prefix);
-        $name = str_replace(StreamWrapper::getRootDirectoryName(), '', $this->getName());
+        $name = str_replace(StreamWrapper::getDiskName(), '', $this->getName());
         $output = [sprintf('%s%s', $name, $first ? '/' : '')];
         $children = $this->children;
 
