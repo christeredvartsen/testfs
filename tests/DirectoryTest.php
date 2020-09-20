@@ -167,6 +167,23 @@ TREE;
         $this->expectExceptionObject(new DiskSpaceException('There is not enough space on the disk to add the asset, available: 1 byte, asset: 18 bytes'));
         $disk->addChild(new File('name', 'this is my content'));
     }
+
+    /**
+     * @covers ::removeChild
+     */
+    public function testAvailableDiskSizeIncreasesWhenChildIsRemoved() : void {
+        $disk = new Disk('name');
+        $disk->setDiskSize(1000);
+
+        $disk->addChild(new File('name1', 'this is my content'));
+        $disk->addChild(new File('name2', 'this is some other content'));
+
+        $this->assertSame(956, $disk->getAvailableSize(), 'Expected 956 bytes to be available on the disk');
+        $disk->removeChild('name1');
+        $this->assertSame(974, $disk->getAvailableSize(), 'Expected 974 bytes to be available on the disk');
+        $disk->removeChild('name2');
+        $this->assertSame(1000, $disk->getAvailableSize(), 'Expected 1000 bytes to be available on the disk');
+    }
 }
 
 class UnsupportedAsset extends Asset {
