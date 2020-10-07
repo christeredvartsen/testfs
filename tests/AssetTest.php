@@ -499,30 +499,30 @@ class AssetTest extends TestCase {
     }
 
     /**
-     * @covers ::getDisk
-     * @covers TestFs\Disk::getDisk
+     * @covers ::getDevice
+     * @covers TestFs\Device::getDevice
      */
-    public function testCanGetDisk() : void {
-        $file = new File('name');
-        $dir  = new Directory('name');
-        $disk = new Disk('some name');
+    public function testCanGetDevice() : void {
+        $file   = new File('name');
+        $dir    = new Directory('name');
+        $device = new Device('some name');
         $dir->addChild($file);
-        $disk->addChild($dir);
+        $device->addChild($dir);
 
-        $this->assertSame($disk, $file->getDisk(), 'Incorrect instance returned');
-        $this->assertSame($disk, $dir->getDisk(), 'Incorrect instance returned');
-        $this->assertSame($disk, $disk->getDisk(), 'Incorrect instance returned');
+        $this->assertSame($device, $file->getDevice(), 'Incorrect instance returned');
+        $this->assertSame($device, $dir->getDevice(), 'Incorrect instance returned');
+        $this->assertSame($device, $device->getDevice(), 'Incorrect instance returned');
     }
 
     /**
-     * @covers ::getDisk
+     * @covers ::getDevice
      */
-    public function testReturnNullIfThereIsNoDisk() : void {
+    public function testReturnNullIfThereIsNoDevice() : void {
         $file = new File('name');
         $dir  = new Directory('name');
         $dir->addChild($file);
 
-        $this->assertNull($file->getDisk(), 'Did not expect any disk');
-        $this->assertNull($dir->getDisk(), 'Did not expect any disk');
+        $this->assertNull($file->getDevice(), 'Did not expect any device');
+        $this->assertNull($dir->getDevice(), 'Did not expect any device');
     }
 }

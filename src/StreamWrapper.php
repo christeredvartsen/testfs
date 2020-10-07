@@ -14,11 +14,11 @@ class StreamWrapper {
     public $context;
 
     /**
-     * Disk asset
+     * Device asset
      *
-     * @var ?Disk
+     * @var ?Device
      */
-    private static ?Disk $disk;
+    private static ?Device $device;
 
     /**
      * Wrapper protocol
@@ -26,9 +26,9 @@ class StreamWrapper {
     private static string $protocol = 'tfs';
 
     /**
-     * Name of the disk instance
+     * Name of the device instance
      */
-    private static string $diskName = '<disk>';
+    private static string $deviceName = '<device>';
 
     /**
      * Asset factory
@@ -184,16 +184,16 @@ class StreamWrapper {
     }
 
     /**
-     * Get the disk name
+     * Get the device name
      *
      * @return string
      */
-    public static function getDiskName() : string {
-        return self::$diskName;
+    public static function getDeviceName() : string {
+        return self::$deviceName;
     }
 
     /**
-     * Register the stream wrapper and create the filesystem disk
+     * Register the stream wrapper and create the filesystem device
      *
      * @see https://www.php.net/manual/en/function.stream-wrapper-register.php
      *
@@ -217,20 +217,20 @@ class StreamWrapper {
         self::setUid($uid);
         self::setGid($gid);
 
-        self::$disk = new Disk(self::$diskName);
+        self::$device = new Device(self::$deviceName);
 
         return stream_wrapper_register(self::$protocol, self::class);
     }
 
     /**
-     * Un-register the stream wrapper and destroy the filesystem disk
+     * Un-register the stream wrapper and destroy the filesystem device
      *
      * @see https://www.php.net/manual/en/function.stream-wrapper-unregister.php
      *
      * @return bool True on success, false otherwise
      */
     public static function unregister() : bool {
-        self::$disk   = null;
+        self::$device = null;
         self::$uid    = 0;
         self::$gid    = 0;
         self::$users  = [];
@@ -240,12 +240,12 @@ class StreamWrapper {
     }
 
     /**
-     * Get the filesystem disk
+     * Get the filesystem device
      *
-     * @return ?Disk
+     * @return ?Device
      */
-    public static function getDisk() : ?Disk {
-        return self::$disk;
+    public static function getDevice() : ?Device {
+        return self::$device;
     }
 
     /**
@@ -384,8 +384,8 @@ class StreamWrapper {
     public function mkdir(string $path, int $mode, int $options) : bool {
         $path = $this->urlToPath($path);
 
-        /** @var Disk */
-        $current = self::$disk;
+        /** @var Device */
+        $current = self::$device;
 
         $dirs = array_filter(explode('/', $path));
         $numParts = count($dirs);
@@ -911,7 +911,7 @@ class StreamWrapper {
         $asset = $this->getAsset($path);
 
         /** @var Directory */
-        $parent = null !== $asset ? $asset->getParent() : self::$disk;
+        $parent = null !== $asset ? $asset->getParent() : self::$device;
 
         if (null === $asset) {
             $this->warn(sprintf('unlink(%s): No such file or directory', $path));
@@ -981,7 +981,7 @@ class StreamWrapper {
      */
     private function getAsset(string $path) {
         $parts = array_filter(explode('/', $path));
-        $current = self::$disk;
+        $current = self::$device;
 
         foreach ($parts as $part) {
             if (!$current instanceof Directory) {
@@ -1006,16 +1006,16 @@ class StreamWrapper {
      * Given "foo/bar/baz.txt" this method will return the "foo/bar" directory, if it exists.
      *
      * @param string $path The path to get the parent of
-     * @return Directory|Disk|null Returns null if the asset does not exist
+     * @return Directory|Device|null Returns null if the asset does not exist
      */
     private function getAssetParent(string $path) {
         $parentPath = implode('/', array_slice(explode('/', $path), 0, -1));
 
         if ($parentPath) {
-            /** @var Directory|Disk */
+            /** @var Directory|Device */
             $parent = $this->getAsset($parentPath);
         } else {
-            $parent = self::$disk;
+            $parent = self::$device;
         }
 
         return $parent;

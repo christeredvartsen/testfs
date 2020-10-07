@@ -3,4 +3,4 @@ namespace TestFs\Exception;
 
 use RuntimeException as SplRuntimeException;
 
-class DiskSpaceException extends SplRuntimeException {}
+class NoSpaceLeftOnDeviceException extends SplRuntimeException {}

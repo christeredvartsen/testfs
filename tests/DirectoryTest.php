@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
-use TestFs\Exception\DiskSpaceException;
 use TestFs\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use TestFs\Exception\NoSpaceLeftOnDeviceException;
 
 /**
  * @coversDefaultClass TestFs\Directory
@@ -160,29 +160,29 @@ TREE;
     /**
      * @covers ::addChild
      */
-    public function testThrowsExceptionWhenAddingChildWithNoSpaceLeftOnDisk() : void {
-        $disk = new Disk('name');
-        $disk->setDiskSize(1);
+    public function testThrowsExceptionWhenAddingChildWithNoSpaceLeftOnDevice() : void {
+        $device = new Device('name');
+        $device->setDeviceSize(1);
 
-        $this->expectExceptionObject(new DiskSpaceException('There is not enough space on the disk to add the asset, available: 1 byte, asset: 18 bytes'));
-        $disk->addChild(new File('name', 'this is my content'));
+        $this->expectExceptionObject(new NoSpaceLeftOnDeviceException('There is not enough space on the device to add the asset, available: 1 byte, asset: 18 bytes'));
+        $device->addChild(new File('name', 'this is my content'));
     }
 
     /**
      * @covers ::removeChild
      */
-    public function testAvailableDiskSizeIncreasesWhenChildIsRemoved() : void {
-        $disk = new Disk('name');
-        $disk->setDiskSize(1000);
+    public function testAvailableDeviceSizeIncreasesWhenChildIsRemoved() : void {
+        $device = new Device('name');
+        $device->setDeviceSize(1000);
 
-        $disk->addChild(new File('name1', 'this is my content'));
-        $disk->addChild(new File('name2', 'this is some other content'));
+        $device->addChild(new File('name1', 'this is my content'));
+        $device->addChild(new File('name2', 'this is some other content'));
 
-        $this->assertSame(956, $disk->getAvailableSize(), 'Expected 956 bytes to be available on the disk');
-        $disk->removeChild('name1');
-        $this->assertSame(974, $disk->getAvailableSize(), 'Expected 974 bytes to be available on the disk');
-        $disk->removeChild('name2');
-        $this->assertSame(1000, $disk->getAvailableSize(), 'Expected 1000 bytes to be available on the disk');
+        $this->assertSame(956, $device->getAvailableSize(), 'Expected 956 bytes to be available on the device');
+        $device->removeChild('name1');
+        $this->assertSame(974, $device->getAvailableSize(), 'Expected 974 bytes to be available on the device');
+        $device->removeChild('name2');
+        $this->assertSame(1000, $device->getAvailableSize(), 'Expected 1000 bytes to be available on the device');
     }
 }
 

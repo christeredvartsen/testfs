@@ -3,57 +3,57 @@ namespace TestFs;
 
 use TestFs\Exception\InvalidArgumentException;
 
-class Disk extends Directory {
-    const UNLIMITED_DISK_SIZE = -1;
+class Device extends Directory {
+    const UNLIMITED_SIZE = -1;
 
     /**
      * Available storage space
      */
-    private int $diskSize = self::UNLIMITED_DISK_SIZE;
+    private int $deviceSize = self::UNLIMITED_SIZE;
 
     /**
-     * Set the disk size in bytes
+     * Set the device size in bytes
      *
      * @param int $size Size in bytes
      * @throws InvalidArgumentException
      * @return void
      */
-    public function setDiskSize(int $size) : void {
+    public function setDeviceSize(int $size) : void {
         if ($size < $this->getSize()) {
             throw new InvalidArgumentException('Size of the files in the virtual filesystem already exceeds the given size');
         }
 
-        $this->diskSize = max(self::UNLIMITED_DISK_SIZE, $size);
+        $this->deviceSize = max(self::UNLIMITED_SIZE, $size);
     }
 
     /**
-     * Get the disk size
+     * Get the device size
      *
      * @return int
      */
-    public function getDiskSize() : int {
-        return $this->diskSize;
+    public function getDeviceSize() : int {
+        return $this->deviceSize;
     }
 
     /**
-     * Get the available size
+     * Get the available size left on the device
      *
      * @return int
      */
     public function getAvailableSize() : int {
-        if (self::UNLIMITED_DISK_SIZE === $this->diskSize) {
-            return self::UNLIMITED_DISK_SIZE;
+        if (self::UNLIMITED_SIZE === $this->deviceSize) {
+            return self::UNLIMITED_SIZE;
         }
 
-        return $this->diskSize - $this->getSize();
+        return $this->deviceSize - $this->getSize();
     }
 
     /**
      * Return self when getting the root directory
      *
-     * @return Disk
+     * @return Device
      */
-    public function getDisk(): Disk {
+    public function getDevice(): Device {
         return $this;
     }
 }

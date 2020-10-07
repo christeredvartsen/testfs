@@ -258,12 +258,12 @@ abstract class Asset {
     }
 
     /**
-     * Get the file system disk
+     * Get the file system device
      *
-     * @return ?Disk
+     * @return ?Device
      */
-    public function getDisk() : ?Disk {
-        return null === $this->parent ? null : $this->parent->getDisk();
+    public function getDevice() : ?Device {
+        return null === $this->parent ? null : $this->parent->getDevice();
     }
 
     /**
