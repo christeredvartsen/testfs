@@ -3,6 +3,7 @@ namespace TestFs;
 
 use TestFs\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use TestFs\Exception\NoSpaceLeftOnDeviceException;
 
 /**
  * @coversDefaultClass TestFs\Directory
@@ -154,6 +155,34 @@ TREE;
 
         $this->expectExceptionObject(new InvalidArgumentException('Unsupported asset type: TestFs\UnsupportedAsset'));
         $dir->addChild(new UnsupportedAsset('name'));
+    }
+
+    /**
+     * @covers ::addChild
+     */
+    public function testThrowsExceptionWhenAddingChildWithNoSpaceLeftOnDevice() : void {
+        $device = new Device('name');
+        $device->setDeviceSize(1);
+
+        $this->expectExceptionObject(new NoSpaceLeftOnDeviceException('There is not enough space on the device to add the asset, available: 1 byte, asset: 18 bytes'));
+        $device->addChild(new File('name', 'this is my content'));
+    }
+
+    /**
+     * @covers ::removeChild
+     */
+    public function testAvailableDeviceSizeIncreasesWhenChildIsRemoved() : void {
+        $device = new Device('name');
+        $device->setDeviceSize(1000);
+
+        $device->addChild(new File('name1', 'this is my content'));
+        $device->addChild(new File('name2', 'this is some other content'));
+
+        $this->assertSame(956, $device->getAvailableSize(), 'Expected 956 bytes to be available on the device');
+        $device->removeChild('name1');
+        $this->assertSame(974, $device->getAvailableSize(), 'Expected 974 bytes to be available on the device');
+        $device->removeChild('name2');
+        $this->assertSame(1000, $device->getAvailableSize(), 'Expected 1000 bytes to be available on the device');
     }
 }
 

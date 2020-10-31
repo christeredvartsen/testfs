@@ -14,11 +14,11 @@ class StreamWrapper {
     public $context;
 
     /**
-     * Root asset
+     * Device asset
      *
-     * @var ?Directory
+     * @var ?Device
      */
-    private static ?Directory $root;
+    private static ?Device $device;
 
     /**
      * Wrapper protocol
@@ -26,9 +26,9 @@ class StreamWrapper {
     private static string $protocol = 'tfs';
 
     /**
-     * Name of the root Directory instance
+     * Name of the device instance
      */
-    private static string $rootDirectoryName = '<root>';
+    private static string $deviceName = '<device>';
 
     /**
      * Asset factory
@@ -74,7 +74,7 @@ class StreamWrapper {
      */
     private static array $defaultGroups = [
         0 => [
-            'name' => 'root',
+            'name'    => 'root',
             'members' => [0],
         ],
     ];
@@ -184,16 +184,16 @@ class StreamWrapper {
     }
 
     /**
-     * Get the root directory name
+     * Get the device name
      *
      * @return string
      */
-    public static function getRootDirectoryName() : string {
-        return self::$rootDirectoryName;
+    public static function getDeviceName() : string {
+        return self::$deviceName;
     }
 
     /**
-     * Register the stream wrapper and create the filesystem root
+     * Register the stream wrapper and create the filesystem device
      *
      * @see https://www.php.net/manual/en/function.stream-wrapper-register.php
      *
@@ -217,20 +217,20 @@ class StreamWrapper {
         self::setUid($uid);
         self::setGid($gid);
 
-        self::$root = new Directory(self::$rootDirectoryName);
+        self::$device = new Device(self::$deviceName);
 
         return stream_wrapper_register(self::$protocol, self::class);
     }
 
     /**
-     * Un-register the stream wrapper and destroy the filesystem root
+     * Un-register the stream wrapper and destroy the filesystem device
      *
      * @see https://www.php.net/manual/en/function.stream-wrapper-unregister.php
      *
      * @return bool True on success, false otherwise
      */
     public static function unregister() : bool {
-        self::$root   = null;
+        self::$device = null;
         self::$uid    = 0;
         self::$gid    = 0;
         self::$users  = [];
@@ -240,12 +240,12 @@ class StreamWrapper {
     }
 
     /**
-     * Get the filesystem root
+     * Get the filesystem device
      *
-     * @return ?Directory
+     * @return ?Device
      */
-    public static function getRoot() : ?Directory {
-        return self::$root;
+    public static function getDevice() : ?Device {
+        return self::$device;
     }
 
     /**
@@ -384,8 +384,8 @@ class StreamWrapper {
     public function mkdir(string $path, int $mode, int $options) : bool {
         $path = $this->urlToPath($path);
 
-        /** @var Directory */
-        $current = self::$root;
+        /** @var Device */
+        $current = self::$device;
 
         $dirs = array_filter(explode('/', $path));
         $numParts = count($dirs);
@@ -580,7 +580,6 @@ class StreamWrapper {
      * Get stream metadata
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-metadata.php
-     * @todo Check permissions
      *
      * @param string $path The path to operate on
      * @param int $option The option to use
@@ -912,7 +911,7 @@ class StreamWrapper {
         $asset = $this->getAsset($path);
 
         /** @var Directory */
-        $parent = null !== $asset ? $asset->getParent() : self::$root;
+        $parent = null !== $asset ? $asset->getParent() : self::$device;
 
         if (null === $asset) {
             $this->warn(sprintf('unlink(%s): No such file or directory', $path));
@@ -982,7 +981,7 @@ class StreamWrapper {
      */
     private function getAsset(string $path) {
         $parts = array_filter(explode('/', $path));
-        $current = self::$root;
+        $current = self::$device;
 
         foreach ($parts as $part) {
             if (!$current instanceof Directory) {
@@ -1007,16 +1006,16 @@ class StreamWrapper {
      * Given "foo/bar/baz.txt" this method will return the "foo/bar" directory, if it exists.
      *
      * @param string $path The path to get the parent of
-     * @return Directory|null Returns null if the asset does not exist
+     * @return Directory|Device|null Returns null if the asset does not exist
      */
-    private function getAssetParent(string $path) : ?Directory {
+    private function getAssetParent(string $path) {
         $parentPath = implode('/', array_slice(explode('/', $path), 0, -1));
 
         if ($parentPath) {
-            /** @var Directory */
+            /** @var Directory|Device */
             $parent = $this->getAsset($parentPath);
         } else {
-            $parent = self::$root;
+            $parent = self::$device;
         }
 
         return $parent;

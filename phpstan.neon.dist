@@ -14,3 +14,5 @@ parameters:
           path: tests/*
         - message: '#Cannot call method getChild|hasChild|getParent\(\) on TestFs#'
           path: tests/*
+        - message: '#Call to function stat\(\) on a separate line has no effect\.#'
+          path: tests/StreamWrapperTest.php

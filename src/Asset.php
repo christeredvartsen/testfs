@@ -258,6 +258,15 @@ abstract class Asset {
     }
 
     /**
+     * Get the file system device
+     *
+     * @return ?Device
+     */
+    public function getDevice() : ?Device {
+        return null === $this->parent ? null : $this->parent->getDevice();
+    }
+
+    /**
      * Set the mode
      *
      * @param int $mode The mode to set

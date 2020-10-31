@@ -17,9 +17,9 @@
     "phpstan/extension-installer": "^1.0",
     "phpstan/phpstan": "^0.12",
     "phpstan/phpstan-phpunit": "^0.12.16",
-    "phpunit/phpunit": "^9.3",
-    "psalm/plugin-phpunit": "^0.12",
-    "vimeo/psalm": "^3.14"
+    "phpunit/phpunit": "^9.4",
+    "psalm/plugin-phpunit": "^0.13",
+    "vimeo/psalm": "dev-master"
   },
   "support": {
     "issues": "https://github.com/christeredvartsen/testfs/issues"

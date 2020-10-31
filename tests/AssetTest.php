@@ -497,4 +497,32 @@ class AssetTest extends TestCase {
         $this->assertFalse($asset->isOwnedByUser(0), 'Did not expect UID 0 to own the asset');
         $this->assertTrue($asset->isOwnedByUser(1), 'Expected UID 1 to own the asset');
     }
+
+    /**
+     * @covers ::getDevice
+     * @covers TestFs\Device::getDevice
+     */
+    public function testCanGetDevice() : void {
+        $file   = new File('name');
+        $dir    = new Directory('name');
+        $device = new Device('some name');
+        $dir->addChild($file);
+        $device->addChild($dir);
+
+        $this->assertSame($device, $file->getDevice(), 'Incorrect instance returned');
+        $this->assertSame($device, $dir->getDevice(), 'Incorrect instance returned');
+        $this->assertSame($device, $device->getDevice(), 'Incorrect instance returned');
+    }
+
+    /**
+     * @covers ::getDevice
+     */
+    public function testReturnNullIfThereIsNoDevice() : void {
+        $file = new File('name');
+        $dir  = new Directory('name');
+        $dir->addChild($file);
+
+        $this->assertNull($file->getDevice(), 'Did not expect any device');
+        $this->assertNull($dir->getDevice(), 'Did not expect any device');
+    }
 }

@@ -348,4 +348,21 @@ class FileTest extends TestCase {
         $file->setWrite(false);
         $this->assertFalse($file->truncate(2), 'Expected truncate to return false');
     }
+
+    /**
+     * @covers ::write
+     */
+    public function testTruncateDataWhenThereIsNotEnoughSpaceOnDevice() : void {
+        $file   = new File('name');
+        $device = new Device('some name');
+        $device->setDeviceSize(7);
+        $device->addChild($file);
+
+        @$file->write('some data');
+        $this->assertSame('some da', $file->getContent());
+
+        $this->expectNotice();
+        $this->expectNoticeMessage('fwrite(): write failed, no space left on device');
+        $file->write('some data');
+    }
 }

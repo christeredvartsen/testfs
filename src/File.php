@@ -177,11 +177,19 @@ class File extends Asset {
             $this->size = $this->offset;
         }
 
+        $device = $this->getDevice();
+        $availableSize = $device ? $device->getAvailableSize() : Device::UNLIMITED_SIZE;
         $len = strlen($data);
+
+        if (Device::UNLIMITED_SIZE !== $availableSize && $len > $availableSize) {
+            trigger_error('fwrite(): write failed, no space left on device', E_USER_NOTICE);
+
+            $data = substr($data, 0, $availableSize);
+            $len = $availableSize;
+        }
+
         $this->mtime = time();
-
         $this->content = substr_replace($this->content, $data, $this->offset, $len);
-
         $this->size += $len;
         $this->offset += $len;
 

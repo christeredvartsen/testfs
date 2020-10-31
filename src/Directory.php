@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
+use TestFs\Exception\NoSpaceLeftOnDeviceException;
 use TestFs\Exception\InvalidArgumentException;
 
 class Directory extends Asset {
@@ -120,11 +121,29 @@ class Directory extends Asset {
      *
      * @param Asset $asset The child to add
      * @throws InvalidArgumentException Throws an exception if a child with the same name exists
+     * @throws NoSpaceLeftOnDeviceException Thrown if there is not enough space on the device to add the asset
      * @return void
      */
     public function addChild(Asset $asset) : void {
         if (!$asset instanceof File && !$asset instanceof Directory) {
             throw new InvalidArgumentException(sprintf('Unsupported asset type: %s', get_class($asset)));
+        }
+
+        $device = $this->getDevice();
+
+        if (null !== $device) {
+            $assetSize     = $asset->getSize();
+            $availablesize = $device->getAvailableSize();
+
+            if ($availablesize !== Device::UNLIMITED_SIZE && $assetSize > $availablesize) {
+                throw new NoSpaceLeftOnDeviceException(sprintf(
+                    'There is not enough space on the device to add the asset, available: %d byte%s, asset: %d byte%s',
+                    $availablesize,
+                    1 !== $availablesize ? 's' : '',
+                    $assetSize,
+                    1 !== $assetSize ? 's' : '',
+                ));
+            }
         }
 
         $name = $asset->getName();
@@ -180,7 +199,7 @@ class Directory extends Asset {
      */
     public function tree(array $prefix = [], int &$numFiles = 0, int &$numDirectories = 1) : string {
         $first = empty($prefix);
-        $name = str_replace(StreamWrapper::getRootDirectoryName(), '', $this->getName());
+        $name = str_replace(StreamWrapper::getDeviceName(), '', $this->getName());
         $output = [sprintf('%s%s', $name, $first ? '/' : '')];
         $children = $this->children;
 
