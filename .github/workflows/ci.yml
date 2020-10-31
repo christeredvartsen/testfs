@@ -9,6 +9,7 @@ jobs:
 
       - name: PHP version
         run: |
+          composer --version
           php -v
           php -i
           php -m
