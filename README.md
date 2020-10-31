@@ -13,7 +13,7 @@ This library requires PHP >= 7.4.
 Install using [Composer](https://getcomposer.org):
 
 ```
-composer install christeredvartsen/testfs
+composer require christeredvartsen/testfs
 ```
 
 ## Usage
