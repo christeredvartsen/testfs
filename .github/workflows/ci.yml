@@ -2,23 +2,28 @@ name: CI
 on: push
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ['ubuntu-20.04']
+        php: ['7.4', '8.0']
     name: Run CI build
     steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+
       - uses: actions/checkout@v2
 
       - name: PHP version
         run: |
-          composer --version
           php -v
           php -i
           php -m
 
       - name: Validate composer files
         run: composer validate --strict
-
-      - name: Lint all PHP files
-        run: composer run lint
 
       - name: Get Composer Cache Directory
         id: composer-cache-dir
@@ -35,10 +40,10 @@ jobs:
             ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-suggest --no-ansi --no-progress -o
+        run: composer install
 
       - name: Run unit tests
-        run: composer run test
+        run: vendor/bin/phpunit
 
       - name: Run static analysis
-        run: composer run sa
+        run: vendir/bin/psalm

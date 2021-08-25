@@ -189,7 +189,7 @@ class StreamWrapperTest extends TestCase {
         $path = 'tfs://foo';
         $handle = opendir($path);
 
-        foreach ($entries as $name => $entry) {
+        foreach ($entries as $entry) {
             $asset = readdir($handle);
             $this->assertSame($entry['expectedName'], $asset);
             $this->assertSame($entry['type'], filetype(sprintf('%s/%s', $path, $asset)));
@@ -197,7 +197,7 @@ class StreamWrapperTest extends TestCase {
 
         rewinddir($handle);
 
-        foreach ($entries as $name => $entry) {
+        foreach ($entries as $entry) {
             $asset = readdir($handle);
             $this->assertSame($entry['expectedName'], $asset);
             $this->assertSame($entry['type'], filetype(sprintf('%s/%s', $path, $asset)));
@@ -657,7 +657,7 @@ class StreamWrapperTest extends TestCase {
 
         $this->expectWarning();
         $this->expectWarningMessage('stat(): stat failed for tfs://foo.txt');
-        stat('tfs://foo.txt');
+        $_ = stat('tfs://foo.txt');
     }
 
     /**
@@ -668,7 +668,7 @@ class StreamWrapperTest extends TestCase {
 
         $this->expectWarning();
         $this->expectWarningMessage('stat(): stat failed for tfs://foo.txt');
-        stat('tfs://foo.txt');
+        $_ = stat('tfs://foo.txt');
     }
 
     /**
@@ -687,7 +687,7 @@ class StreamWrapperTest extends TestCase {
 
         $this->expectWarning();
         $this->expectWarningMessage('stat(): stat failed for tfs://dir/file');
-        stat('tfs://dir/file');
+        $_ = stat('tfs://dir/file');
     }
 
     /**

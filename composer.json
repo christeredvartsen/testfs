@@ -14,11 +14,8 @@
     "php": ">=7.4"
   },
   "require-dev": {
-    "phpstan/extension-installer": "^1.0",
-    "phpstan/phpstan": "^0.12",
-    "phpstan/phpstan-phpunit": "^0.12.16",
     "phpunit/phpunit": "^9.4",
-    "psalm/plugin-phpunit": "^0.13",
+    "psalm/plugin-phpunit": "^0.16.1",
     "vimeo/psalm": "^4.1"
   },
   "support": {
@@ -35,17 +32,10 @@
     }
   },
   "scripts": {
-    "lint": "for file in `git ls-files '*php'`; do php -l $file; done",
     "test": "vendor/bin/phpunit",
     "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
-    "phpstan": "vendor/bin/phpstan analyse",
-    "psalm": "vendor/bin/psalm",
-    "sa": [
-      "@phpstan",
-      "@psalm"
-    ],
+    "sa": "vendor/bin/psalm",
     "ci": [
-      "@lint",
       "@test",
       "@sa"
     ]

@@ -342,7 +342,6 @@ class StreamWrapper {
             throw new RuntimeException('Invalid directory iterator');
         }
 
-        /** @var File|Directory|null */
         $child = $this->directoryIterator->current();
 
         if (null === $child) {
@@ -690,7 +689,7 @@ class StreamWrapper {
                     return false;
                 }
 
-                $asset->setGid((int) $gid);
+                $asset->setGid($gid);
 
                 break;
             case STREAM_META_ACCESS: // chmod
