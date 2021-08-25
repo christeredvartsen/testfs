@@ -1,6 +1,6 @@
 # TestFs
 
-![Run tests](https://github.com/christeredvartsen/testfs/workflows/Run%20tests/badge.svg)
+[![CI](https://github.com/christeredvartsen/testfs/actions/workflows/ci.yml/badge.svg)](https://github.com/christeredvartsen/testfs/actions/workflows/ci.yml)
 
 Virtual filesystem for PHP for use with testing, implemented using a stream wrapper.
 
