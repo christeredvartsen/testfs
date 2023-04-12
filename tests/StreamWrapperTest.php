@@ -9,6 +9,8 @@ use PHPUnit\Framework\TestCase;
  * @coversDefaultClass TestFs\StreamWrapper
  */
 class StreamWrapperTest extends TestCase {
+    use ErrorHandler;
+
     private Device $device;
 
     public function setUp() : void {
@@ -64,8 +66,14 @@ class StreamWrapperTest extends TestCase {
      */
     public function testCanCreateDirectoryRecursively() : void {
         $this->assertTrue(mkdir('tfs://foo/bar/baz', 0777, true));
-        $this->assertTrue($this->device->getChildDirectory('foo')->getChildDirectory('bar')->hasChild('baz'));
-        $this->assertInstanceOf(Directory::class, $this->device->getChildDirectory('foo')->getChildDirectory('bar')->getChild('baz'));
+        $child = $this->device->getChildDirectory('foo');
+        $this->assertInstanceOf(Directory::class, $child);
+
+        $child = $child->getChildDirectory('bar');
+        $this->assertInstanceOf(Directory::class, $child);
+
+        $this->assertTrue($child->hasChild('baz'));
+        $this->assertInstanceOf(Directory::class, $child->getChild('baz'));
     }
 
     /**
@@ -73,10 +81,8 @@ class StreamWrapperTest extends TestCase {
      */
     public function testMkdirFailsWhenNameExists() : void {
         $this->assertTrue(mkdir('tfs://foobar'));
-        $this->assertFalse(@mkdir('tfs://foobar'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('mkdir(): File exists');
+        $this->assertFalse($this->ignoreError(fn () => mkdir('tfs://foobar')));
+        $this->expectExceptionObject(new Warning('mkdir(): File exists'));
         mkdir('tfs://foobar');
     }
 
@@ -84,10 +90,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::mkdir
      */
     public function testMkdirFailsOnNonRecursiveWhenADirIsMissing() : void {
-        $this->assertFalse(@mkdir('tfs://foo/bar'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('mkdir(): No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => mkdir('tfs://foo/bar')));
+        $this->expectExceptionObject(new Warning('mkdir(): No such file or directory'));
         mkdir('tfs://foo/bar');
     }
 
@@ -97,8 +101,11 @@ class StreamWrapperTest extends TestCase {
     public function testCanCreateDirsWhenSomeDirsExist() : void {
         $this->assertTrue(mkdir('tfs://foo'));
         $this->assertTrue(mkdir('tfs://foo/bar'));
-        $this->assertTrue($this->device->getChild('foo')->hasChild('bar'));
-        $this->assertInstanceOf(Directory::class, $this->device->getChild('foo')->getChild('bar'));
+
+        $dir = $this->device->getChild('foo');
+        $this->assertInstanceOf(Directory::class, $dir);
+        $this->assertTrue($dir->hasChild('bar'));
+        $this->assertInstanceOf(Directory::class, $dir->getChild('bar'));
     }
 
     /**
@@ -115,10 +122,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::rmdir
      */
     public function testRmDirFailsWhenDeletingANonExistingDir() : void {
-        $this->assertFalse(@rmdir('tfs://foo'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('rmdir(foo): No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => rmdir('tfs://foo')));
+        $this->expectExceptionObject(new Warning('rmdir(foo): No such file or directory'));
         rmdir('tfs://foo');
     }
 
@@ -127,10 +132,8 @@ class StreamWrapperTest extends TestCase {
      */
     public function testRmDirFailsWhenDeletingANonDirectory() : void {
         $this->assertTrue(touch('tfs://foo'));
-        $this->assertFalse(@rmdir('tfs://foo'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('rmdir(foo): Not a directory');
+        $this->assertFalse($this->ignoreError(fn () => rmdir('tfs://foo')));
+        $this->expectExceptionObject(new Warning('rmdir(foo): Not a directory'));
         rmdir('tfs://foo');
     }
 
@@ -140,10 +143,8 @@ class StreamWrapperTest extends TestCase {
     public function testRmDirFailsWhenDeletingANonEmptyDirectory() : void {
         $this->assertTrue(mkdir('tfs://foo'));
         $this->assertTrue(touch('tfs://foo/bar'));
-        $this->assertFalse(@rmdir('tfs://foo'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('rmdir(foo): Not empty');
+        $this->assertFalse($this->ignoreError(fn () => rmdir('tfs://foo')));
+        $this->expectExceptionObject(new Warning('rmdir(foo): Not empty'));
         rmdir('tfs://foo');
     }
 
@@ -158,10 +159,9 @@ class StreamWrapperTest extends TestCase {
         StreamWrapper::setUid(1);
         StreamWrapper::setGid(1);
 
-        $this->assertFalse(@rmdir('tfs://root'));
+        $this->assertFalse($this->ignoreError(fn () => rmdir('tfs://root')));
 
-        $this->expectWarning();
-        $this->expectWarningMessage('rmdir(root): Permission denied');
+        $this->expectExceptionObject(new Warning('rmdir(root): Permission denied'));
         rmdir('tfs://root');
     }
 
@@ -212,10 +212,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::dir_opendir
      */
     public function testFailsWhenOpeningDirectoryThatDoesNotExist() : void {
-        $this->assertFalse(@opendir('tfs://foo'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('opendir(tfs://foo): failed to open dir: No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => opendir('tfs://foo')));
+        $this->expectExceptionObject(new Warning('opendir(tfs://foo): failed to open dir: No such file or directory'));
         opendir('tfs://foo');
     }
 
@@ -224,27 +222,9 @@ class StreamWrapperTest extends TestCase {
      */
     public function testFailsWhenOpeningFileAsDir() : void {
         touch('tfs://foo');
-        $this->assertFalse(@opendir('tfs://foo'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('opendir(tfs://foo): failed to open dir: Not a directory');
+        $this->assertFalse($this->ignoreError(fn () => opendir('tfs://foo')));
+        $this->expectExceptionObject(new Warning('opendir(tfs://foo): failed to open dir: Not a directory'));
         opendir('tfs://foo');
-    }
-
-    /**
-     * @return array<int,array<string>>
-     */
-    public function getUrls() : array {
-        return [
-            [
-                'tfs://foo',
-                'foo'
-            ],
-            [
-                'tfs://foo//bar\\baz',
-                'foo/bar/baz'
-            ]
-        ];
     }
 
     /**
@@ -261,22 +241,6 @@ class StreamWrapperTest extends TestCase {
     public function testUrlToPathFailsOnInvalidUrl() : void {
         $this->expectExceptionObject(new InvalidArgumentException('Invalid URL: foo://bar'));
         (new StreamWrapper())->urlToPath('foo://bar');
-    }
-
-    /**
-     * @return array<int,array<string>>
-     */
-    public function getPaths() : array {
-        return [
-            [
-                'foo',
-                'tfs://foo'
-            ],
-            [
-                '/foo/bar/baz.txt',
-                'tfs://foo/bar/baz.txt'
-            ],
-        ];
     }
 
     /**
@@ -299,10 +263,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::unlink
      */
     public function testRemoveFileThatDoesNotExistFails() : void {
-        $this->assertFalse(@unlink('tfs://foo.bar'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('unlink(foo.bar): No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => unlink('tfs://foo.bar')));
+        $this->expectExceptionObject(new Warning('unlink(foo.bar): No such file or directory'));
         unlink('tfs://foo.bar');
     }
 
@@ -311,10 +273,9 @@ class StreamWrapperTest extends TestCase {
      */
     public function testUnlinkDirectoryFails() : void {
         mkdir('tfs://foo');
-        $this->assertFalse(@unlink('tfs://foo'));
+        $this->assertFalse($this->ignoreError(fn () => unlink('tfs://foo')));
 
-        $this->expectWarning();
-        $this->expectWarningMessage('unlink(foo): Is a directory');
+        $this->expectExceptionObject(new Warning('unlink(foo): Is a directory'));
         unlink('tfs://foo');
     }
 
@@ -330,10 +291,9 @@ class StreamWrapperTest extends TestCase {
         StreamWrapper::setUid(1);
         StreamWrapper::setGid(1);
 
-        $this->assertFalse(@unlink('tfs://dir/file'));
+        $this->assertFalse($this->ignoreError(fn () => unlink('tfs://dir/file')));
 
-        $this->expectWarning();
-        $this->expectWarningMessage('unlink(dir/file): Permission denied');
+        $this->expectExceptionObject(new Warning('unlink(dir/file): Permission denied'));
         unlink('tfs://dir/file');
     }
 
@@ -400,10 +360,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::rename
      */
     public function testRenameFailsWhenOriginDoesNotExist() : void {
-        $this->assertFalse(@rename('tfs://foo', 'tfs://bar/baz.txt'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('rename(tfs://foo,tfs://bar/baz.txt): No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => rename('tfs://foo', 'tfs://bar/baz.txt')));
+        $this->expectExceptionObject(new Warning('rename(tfs://foo,tfs://bar/baz.txt): No such file or directory'));
         rename('tfs://foo', 'tfs://bar/baz.txt');
     }
 
@@ -412,10 +370,9 @@ class StreamWrapperTest extends TestCase {
      */
     public function testRenameFailsWhenParentOfTargetDoesNotExist() : void {
         $this->assertTrue(touch('tfs://foo'));
-        $this->assertFalse(@rename('tfs://foo', 'tfs://bar/baz.txt'));
+        $this->assertFalse($this->ignoreError(fn () => rename('tfs://foo', 'tfs://bar/baz.txt')));
 
-        $this->expectWarning();
-        $this->expectWarningMessage('rename(tfs://foo,tfs://bar/baz.txt): No such file or directory');
+        $this->expectExceptionObject(new Warning('rename(tfs://foo,tfs://bar/baz.txt): No such file or directory'));
         rename('tfs://foo', 'tfs://bar/baz.txt');
     }
 
@@ -425,10 +382,8 @@ class StreamWrapperTest extends TestCase {
     public function testRenameFailsWhenTargetIsADirectory() : void {
         $this->assertTrue(touch('tfs://foo'));
         $this->assertTrue(mkdir('tfs://bar'));
-        $this->assertFalse(@rename('tfs://foo', 'tfs://bar'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('rename(tfs://foo,tfs://bar): Is a directory');
+        $this->assertFalse($this->ignoreError(fn () => rename('tfs://foo', 'tfs://bar')));
+        $this->expectExceptionObject(new Warning('rename(tfs://foo,tfs://bar): Is a directory'));
         rename('tfs://foo', 'tfs://bar');
     }
 
@@ -438,10 +393,9 @@ class StreamWrapperTest extends TestCase {
     public function testRenameFailsWhenRenamingFromDirectoryToFile() : void {
         $this->assertTrue(mkdir('tfs://foo'));
         $this->assertTrue(touch('tfs://bar'));
-        $this->assertFalse(@rename('tfs://foo', 'tfs://bar'));
+        $this->assertFalse($this->ignoreError(fn () => rename('tfs://foo', 'tfs://bar')));
 
-        $this->expectWarning();
-        $this->expectWarningMessage('rename(tfs://foo,tfs://bar): Not a directory');
+        $this->expectExceptionObject(new Warning('rename(tfs://foo,tfs://bar): Not a directory'));
         rename('tfs://foo', 'tfs://bar');
     }
 
@@ -453,6 +407,7 @@ class StreamWrapperTest extends TestCase {
         $this->assertTrue(touch('tfs://target.txt'));
 
         $target = $this->device->getChild('target.txt');
+        $this->assertInstanceOf(File::class, $target);
 
         $this->assertSame($this->device, $target->getParent());
         $this->assertTrue(rename('tfs://origin.txt', 'tfs://target.txt'), 'Expected rename to succeed');
@@ -484,7 +439,9 @@ class StreamWrapperTest extends TestCase {
         $this->assertTrue(rename('tfs://bar', 'tfs://baz/barfoo'));
 
         $this->assertFalse($this->device->hasChild('bar'), '/bar should not exist');
-        $this->assertTrue($this->device->getChild('baz')->hasChild('barfoo'), '/baz/barfoo should exist');
+        $dir = $this->device->getChild('baz');
+        $this->assertInstanceOf(Directory::class, $dir);
+        $this->assertTrue($dir->hasChild('barfoo'), '/baz/barfoo should exist');
     }
 
     /**
@@ -545,10 +502,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::warn
      */
     public function testFopenFailsOnInvalidMode() : void {
-        $this->assertFalse(@fopen('tfs://foo.txt', 'z'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('fopen(): Unsupported mode: "z"');
+        $this->assertFalse($this->ignoreError(fn () => fopen('tfs://foo.txt', 'z')));
+        $this->expectExceptionObject(new Warning('fopen(): Unsupported mode: "z"'));
         fopen('tfs://foo.txt', 'z');
     }
 
@@ -556,10 +511,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::stream_open
      */
     public function testFopenFailsWhenUsingPathOption() : void {
-        $this->assertFalse(@fopen('tfs://foo.txt', 'w', true));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('TestFs does not support "use_include_path"');
+        $this->assertFalse($this->ignoreError(fn () => fopen('tfs://foo.txt', 'w', true)));
+        $this->expectExceptionObject(new Warning('TestFs does not support "use_include_path"'));
         fopen('tfs://foo.txt', 'w', true);
     }
 
@@ -567,10 +520,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::stream_open
      */
     public function testFopenFailsWhenOpeningAFileForWritingAndTheParentDoesNotExist() : void {
-        $this->assertFalse(@fopen('tfs://foo/bar.txt', 'w'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('fopen(foo/bar.txt): failed to open stream: No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => fopen('tfs://foo/bar.txt', 'w')));
+        $this->expectExceptionObject(new Warning('fopen(foo/bar.txt): failed to open stream: No such file or directory'));
         fopen('tfs://foo/bar.txt', 'w');
     }
 
@@ -579,10 +530,8 @@ class StreamWrapperTest extends TestCase {
      */
     public function testFopenFailsWhenOpeningADirectory() : void {
         mkdir('tfs://foo');
-        $this->assertFalse(@fopen('tfs://foo', 'w'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('fopen(foo): failed to open stream. Is a directory');
+        $this->assertFalse($this->ignoreError(fn () => fopen('tfs://foo', 'w')));
+        $this->expectExceptionObject(new Warning('fopen(foo): failed to open stream. Is a directory'));
         fopen('tfs://foo', 'w');
     }
 
@@ -590,10 +539,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::stream_open
      */
     public function testFopenFailsWhenOpeningAFileThatDoesNotExistWithoutCreationMode() : void {
-        $this->assertFalse(@fopen('tfs://foo.txt', 'r'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('fopen(foo.txt): failed to open stream: No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => fopen('tfs://foo.txt', 'r')));
+        $this->expectExceptionObject(new Warning('fopen(foo.txt): failed to open stream: No such file or directory'));
         fopen('tfs://foo.txt', 'r');
     }
 
@@ -653,10 +600,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::url_stat
      */
     public function testStatFailsWhenAssetDoesNotExist() : void {
-        $this->assertFalse(@stat('tfs://foo.txt'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('stat(): stat failed for tfs://foo.txt');
+        $this->assertFalse($this->ignoreError(fn () => stat('tfs://foo.txt')));
+        $this->expectExceptionObject(new Warning('stat(): stat failed for tfs://foo.txt'));
         $_ = stat('tfs://foo.txt');
     }
 
@@ -664,10 +609,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::url_stat
      */
     public function testStatCanFailQuietlyWhenAssetDoesNotExist() : void {
-        $this->assertFalse(@stat('tfs://foo.txt'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('stat(): stat failed for tfs://foo.txt');
+        $this->assertFalse($this->ignoreError(fn () => stat('tfs://foo.txt')));
+        $this->expectExceptionObject(new Warning('stat(): stat failed for tfs://foo.txt'));
         $_ = stat('tfs://foo.txt');
     }
 
@@ -683,10 +626,8 @@ class StreamWrapperTest extends TestCase {
         StreamWrapper::setUid(1);
         StreamWrapper::setGid(1);
 
-        $this->assertFalse(@stat('tfs://dir/file'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('stat(): stat failed for tfs://dir/file');
+        $this->assertFalse($this->ignoreError(fn () => stat('tfs://dir/file')));
+        $this->expectExceptionObject(new Warning('stat(): stat failed for tfs://dir/file'));
         $_ = stat('tfs://dir/file');
     }
 
@@ -694,10 +635,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::stream_metadata
      */
     public function testTouchFailsWhenParentDirectoryDoesNotExist() : void {
-        $this->assertFalse(@touch('tfs://foo/bar.txt'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('touch(): Unable to create file foo/bar.txt because No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => touch('tfs://foo/bar.txt')));
+        $this->expectExceptionObject(new Warning('touch(): Unable to create file foo/bar.txt because No such file or directory'));
         touch('tfs://foo/bar.txt');
     }
 
@@ -724,10 +663,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::stream_metadata
      */
     public function testFailsWhenChangingModeOnNonExistingFile() : void {
-        $this->assertFalse(@chmod('tfs://foo/bar.txt', 0600));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('chmod(): No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => chmod('tfs://foo/bar.txt', 0600)));
+        $this->expectExceptionObject(new Warning('chmod(): No such file or directory'));
         chmod('tfs://foo/bar.txt', 0600);
     }
 
@@ -748,10 +685,8 @@ class StreamWrapperTest extends TestCase {
      */
     public function testChangeOwnerWithNonExistingUsername() : void {
         touch('tfs://file.txt');
-        $this->assertFalse(@chown('tfs://file.txt', 'non-exsiting-user'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('chown(): Unable to find uid for non-exsiting-user');
+        $this->assertFalse($this->ignoreError(fn () => chown('tfs://file.txt', 'non-exsiting-user')));
+        $this->expectExceptionObject(new Warning('chown(): Unable to find uid for non-exsiting-user'));
         chown('tfs://file.txt', 'non-exsiting-user');
     }
 
@@ -760,10 +695,8 @@ class StreamWrapperTest extends TestCase {
      */
     public function testChangeOwnerWithNonExistingUid() : void {
         touch('tfs://file.txt');
-        $this->assertFalse(@chown('tfs://file.txt', 123));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('chown(): Operation not permitted');
+        $this->assertFalse($this->ignoreError(fn () => chown('tfs://file.txt', 123)));
+        $this->expectExceptionObject(new Warning('chown(): Operation not permitted'));
         chown('tfs://file.txt', 123);
     }
 
@@ -771,10 +704,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::stream_metadata
      */
     public function testChangeOwnerFailsWhenFileDoesNotExist() : void {
-        $this->assertFalse(@chown('tfs://file.txt', 123));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('chown(): No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => chown('tfs://file.txt', 123)));
+        $this->expectExceptionObject(new Warning('chown(): No such file or directory'));
         chown('tfs://file.txt', 123);
     }
 
@@ -790,10 +721,8 @@ class StreamWrapperTest extends TestCase {
         StreamWrapper::setUid(1);
 
         $this->assertTrue(touch('tfs://file.txt'), 'Expected touch to succeed');
-        $this->assertFalse(@chown('tfs://file.txt', 'user2'), 'Expected chown to fail');
-
-        $this->expectWarning();
-        $this->expectWarningMessage('chown(): Operation not permitted');
+        $this->assertFalse($this->ignoreError(fn () => chown('tfs://file.txt', 'user2')), 'Expected chown to fail');
+        $this->expectExceptionObject(new Warning('chown(): Operation not permitted'));
         chown('tfs://file.txt', 'user2');
     }
 
@@ -815,10 +744,8 @@ class StreamWrapperTest extends TestCase {
      */
     public function testChangeGroupWithNonExistingGroup() : void {
         touch('tfs://file.txt');
-        $this->assertFalse(@chgrp('tfs://file.txt', 'non-exsiting-group'));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('chgrp(): Unable to find gid for non-exsiting-group');
+        $this->assertFalse($this->ignoreError(fn () => chgrp('tfs://file.txt', 'non-exsiting-group')));
+        $this->expectExceptionObject(new Warning('chgrp(): Unable to find gid for non-exsiting-group'));
         chgrp('tfs://file.txt', 'non-exsiting-group');
     }
 
@@ -827,10 +754,8 @@ class StreamWrapperTest extends TestCase {
      */
     public function testChangeGroupWithNonExistingGid() : void {
         touch('tfs://file.txt');
-        $this->assertFalse(@chgrp('tfs://file.txt', 123));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('chgrp(): Operation not permitted');
+        $this->assertFalse($this->ignoreError(fn () => chgrp('tfs://file.txt', 123)));
+        $this->expectExceptionObject(new Warning('chgrp(): Operation not permitted'));
         chgrp('tfs://file.txt', 123);
     }
 
@@ -838,10 +763,8 @@ class StreamWrapperTest extends TestCase {
      * @covers ::stream_metadata
      */
     public function testChangeGroupFailsWhenFileDoesNotExist() : void {
-        $this->assertFalse(@chgrp('tfs://file.txt', 123));
-
-        $this->expectWarning();
-        $this->expectWarningMessage('chgrp(): No such file or directory');
+        $this->assertFalse($this->ignoreError(fn () => chgrp('tfs://file.txt', 123)));
+        $this->expectExceptionObject(new Warning('chgrp(): No such file or directory'));
         chgrp('tfs://file.txt', 123);
     }
 
@@ -906,10 +829,9 @@ class StreamWrapperTest extends TestCase {
         StreamWrapper::setUid(1);
         StreamWrapper::setGid(1);
 
-        $this->assertFalse(@opendir('tfs://root'));
+        $this->assertFalse($this->ignoreError(fn () => opendir('tfs://root')));
 
-        $this->expectWarning();
-        $this->expectWarningMessage('opendir(tfs://root): failed to open dir: Permission denied');
+        $this->expectExceptionObject(new Warning('opendir(tfs://root): failed to open dir: Permission denied'));
         opendir('tfs://root');
     }
 
@@ -925,10 +847,9 @@ class StreamWrapperTest extends TestCase {
         StreamWrapper::setUid(1);
         StreamWrapper::setGid(1);
 
-        $this->assertFalse(@opendir('tfs://root/dir'));
+        $this->assertFalse($this->ignoreError(fn () => opendir('tfs://root/dir')));
 
-        $this->expectWarning();
-        $this->expectWarningMessage('opendir(tfs://root/dir): failed to open dir: Permission denied');
+        $this->expectExceptionObject(new Warning('opendir(tfs://root/dir): failed to open dir: Permission denied'));
         opendir('tfs://root/dir');
     }
 
@@ -943,10 +864,9 @@ class StreamWrapperTest extends TestCase {
         StreamWrapper::setUid(1);
         StreamWrapper::setGid(1);
 
-        $this->assertFalse(@mkdir('tfs://root/dir'));
+        $this->assertFalse($this->ignoreError(fn () => mkdir('tfs://root/dir')));
 
-        $this->expectWarning();
-        $this->expectWarningMessage('mkdir(): Permission denied');
+        $this->expectExceptionObject(new Warning('mkdir(): Permission denied'));
         mkdir('tfs://root/dir');
     }
 
@@ -981,10 +901,9 @@ class StreamWrapperTest extends TestCase {
         StreamWrapper::setGid(1);
 
 
-        $this->assertFalse(@fopen('tfs://dir/file', 'w+'), 'Expected fopen to fail');
+        $this->assertFalse($this->ignoreError(fn () => fopen('tfs://dir/file', 'w+')), 'Expected fopen to fail');
 
-        $this->expectWarning();
-        $this->expectWarningMessage('fopen(dir/file): failed to open stream: Permission denied');
+        $this->expectExceptionObject(new Warning('fopen(dir/file): failed to open stream: Permission denied'));
         fopen('tfs://dir/file', 'w+');
     }
 
@@ -1002,10 +921,9 @@ class StreamWrapperTest extends TestCase {
         touch('tfs://dir/file');
         chmod('tfs://dir/file', 0000);
 
-        $this->assertFalse(@fopen('tfs://dir/file', 'r'), 'Expected fopen to fail');
+        $this->assertFalse($this->ignoreError(fn () => fopen('tfs://dir/file', 'r')), 'Expected fopen to fail');
 
-        $this->expectWarning();
-        $this->expectWarningMessage('fopen(dir/file): failed to open stream: Permission denied');
+        $this->expectExceptionObject(new Warning('fopen(dir/file): failed to open stream: Permission denied'));
         fopen('tfs://dir/file', 'r');
     }
 
@@ -1038,10 +956,9 @@ class StreamWrapperTest extends TestCase {
 
         $this->assertTrue(touch('tfs://file.txt'), 'Expected touch to succeed');
         $this->assertTrue(chgrp('tfs://file.txt', 'group1'), 'Expected chgrp to succeed');
-        $this->assertFalse(@chgrp('tfs://file.txt', 'group2'), 'Expected chgrp to fail');
+        $this->assertFalse($this->ignoreError(fn () => chgrp('tfs://file.txt', 'group2')), 'Expected chgrp to fail');
 
-        $this->expectWarning();
-        $this->expectWarningMessage('chgrp(): Operation not permitted');
+        $this->expectExceptionObject(new Warning('chgrp(): Operation not permitted'));
         chgrp('tfs://file.txt', 'group2');
     }
 
@@ -1056,8 +973,7 @@ class StreamWrapperTest extends TestCase {
 
         $this->assertTrue(touch('tfs://file.txt'), 'Expected touch to succeed');
 
-        $this->expectWarning();
-        $this->expectWarningMessage('chgrp(): Operation not permitted');
+        $this->expectExceptionObject(new Warning('chgrp(): Operation not permitted'));
         chgrp('tfs://file.txt', 'group1');
     }
 
@@ -1147,5 +1063,37 @@ class StreamWrapperTest extends TestCase {
     public function testThrowsExceptionOnMissingFileHandleWhenWritingToStream() : void {
         $this->expectExceptionObject(new RuntimeException('Invalid file handle'));
         (new StreamWrapper())->stream_write('some data');
+    }
+
+    /**
+     * @return array<array{url:string,expectedPath:string}>
+     */
+    public static function getUrls() : array {
+        return [
+            [
+                'url' => 'tfs://foo',
+                'expectedPath' => 'foo'
+            ],
+            [
+                'url' => 'tfs://foo//bar\\baz',
+                'expectedPath' => 'foo/bar/baz'
+            ]
+        ];
+    }
+
+    /**
+     * @return array<string,array{path:string,expectedUrl:string}>
+     */
+    public static function getPaths() : array {
+        return [
+            'relative' => [
+                'path' => 'foo',
+                'expectedUrl' => 'tfs://foo'
+            ],
+            'absolute' => [
+                'path' => '/foo/bar/baz.txt',
+                'expectedUrl' => 'tfs://foo/bar/baz.txt'
+            ],
+        ];
     }
 }

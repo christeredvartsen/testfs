@@ -7,6 +7,8 @@ use PHPUnit\Framework\TestCase;
  * @coversDefaultClass TestFs\File
  */
 class FileTest extends TestCase {
+    use ErrorHandler;
+
     /**
      * @covers ::getType
      */
@@ -15,41 +17,11 @@ class FileTest extends TestCase {
     }
 
     /**
-     * @return array<int,array<mixed>>
-     */
-    public function getFileContent() : array {
-        return [
-            ['some content', 12],
-            ['', 0],
-        ];
-    }
-
-    /**
      * @dataProvider getFileContent
      * @covers ::getSize
      */
     public function testCanCalculateSize(string $content, int $expectedSize) : void {
         $this->assertSame($expectedSize, (new File('name', $content))->getSize(), 'Incorrect size');
-    }
-
-    /**
-     * @return array<string,array<mixed>>
-     */
-    public function getContentForReading() : array {
-        return [
-            'empty file' => [
-                'content'        => '',
-                'bytes'          => 10,
-                'expectedOutput' => '',
-                'expectedOffset' => 0
-            ],
-            'file with contents' => [
-                'content'        => 'this is some data',
-                'bytes'          => 7,
-                'expectedOutput' => 'this is',
-                'expectedOffset' => 7
-            ]
-        ];
     }
 
     /**
@@ -74,26 +46,6 @@ class FileTest extends TestCase {
     }
 
     /**
-     * @return array<string,array<mixed>>
-     */
-    public function getContentForWriting() : array {
-        return [
-            'empty string' => [
-                'existingContent' => 'existing content',
-                'newDataLength'   => 0,
-                'newData'         => '',
-                'newContent'      => 'existing content',
-            ],
-            'write some data' => [
-                'existingContent' => 'exsiting content',
-                'newDataLength'   => 9,
-                'newData'         => 'some data',
-                'newContent'      => 'some datacontent',
-            ],
-        ];
-    }
-
-    /**
      * @dataProvider getContentForWriting
      * @covers ::write
      * @covers ::getContent
@@ -108,34 +60,6 @@ class FileTest extends TestCase {
     }
 
     /**
-     * @return array<string,array<mixed>>
-     */
-    public function getDataForTruncate() : array {
-        return [
-            'truncate empty file' => [
-                'existingContent' => '',
-                'size'            => 0,
-                'expectedContent' => '',
-            ],
-            'truncate file with contents' => [
-                'existingContent' => 'existing content',
-                'size'            => 0,
-                'expectedContent' => '',
-            ],
-            'truncate to larger size' => [
-                'existingContent' => 'content',
-                'size'            => 10,
-                'expectedContent' => "content\0\0\0",
-            ],
-            'truncate to smaller size and rewind' => [
-                'existingContent' => 'content',
-                'size'            => 4,
-                'expectedContent' => 'cont',
-            ],
-        ];
-    }
-
-    /**
      * @dataProvider getDataForTruncate
      * @covers ::truncate
      */
@@ -144,35 +68,6 @@ class FileTest extends TestCase {
         $file->truncate($size);
         $this->assertSame($expectedContent, $file->getContent(), 'Incorrect content');
         $this->assertSame(0, $file->getOffset(), 'Offset is not supposed to be changed');
-    }
-
-    /**
-     * @return array<string,array<mixed>>
-     */
-    public function getDataForSeek() : array {
-        return [
-            'set' => [
-                'content'         => 'file content',
-                'seek'            => 5,
-                'whence'          => SEEK_SET,
-                'expectedOffset'  => 5,
-                'expectedContent' => 'file content',
-            ],
-            'cur' => [
-                'content'         => 'file content',
-                'seek'            => 3,
-                'whence'          => SEEK_CUR,
-                'expectedOffset'  => 3,
-                'expectedContent' => 'file content',
-            ],
-            'end' => [
-                'content'         => 'file content',
-                'seek'            => 3,
-                'whence'          => SEEK_END,
-                'expectedOffset'  => 15,
-                'expectedContent' => "file content\0\0\0",
-            ],
-        ];
     }
 
     /**
@@ -358,11 +253,123 @@ class FileTest extends TestCase {
         $device->setDeviceSize(7);
         $device->addChild($file);
 
-        @$file->write('some data');
+        $this->ignoreError(fn () => $file->write('some data'));
         $this->assertSame('some da', $file->getContent());
 
-        $this->expectNotice();
-        $this->expectNoticeMessage('fwrite(): write failed, no space left on device');
+        $this->expectExceptionObject(new Notice('fwrite(): write failed, no space left on device'));
         $file->write('some data');
+    }
+
+    /**
+     * @return array<string,array{content:string,expectedSize:int}>
+     */
+    public static function getFileContent() : array {
+        return [
+            'content' => [
+                'content' => 'some content',
+                'expectedSize' => 12,
+            ],
+            'no content' => [
+                'content' => '',
+                'expectedSize' => 0,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string,array{content:string,bytes:int,expectedOutput:string,expectedOffset:int}>
+     */
+    public static function getContentForReading() : array {
+        return [
+            'empty file' => [
+                'content'        => '',
+                'bytes'          => 10,
+                'expectedOutput' => '',
+                'expectedOffset' => 0
+            ],
+            'file with contents' => [
+                'content'        => 'this is some data',
+                'bytes'          => 7,
+                'expectedOutput' => 'this is',
+                'expectedOffset' => 7
+            ]
+        ];
+    }
+
+    /**
+     * @return array<string,array{existingContent:string,newDataLength:int,newData:string,newContent:string}>
+     */
+    public static function getContentForWriting() : array {
+        return [
+            'empty string' => [
+                'existingContent' => 'existing content',
+                'newDataLength'   => 0,
+                'newData'         => '',
+                'newContent'      => 'existing content',
+            ],
+            'write some data' => [
+                'existingContent' => 'exsiting content',
+                'newDataLength'   => 9,
+                'newData'         => 'some data',
+                'newContent'      => 'some datacontent',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string,array{existingContent:string,size:int,expectedContent:string}>
+     */
+    public static function getDataForTruncate() : array {
+        return [
+            'truncate empty file' => [
+                'existingContent' => '',
+                'size'            => 0,
+                'expectedContent' => '',
+            ],
+            'truncate file with contents' => [
+                'existingContent' => 'existing content',
+                'size'            => 0,
+                'expectedContent' => '',
+            ],
+            'truncate to larger size' => [
+                'existingContent' => 'content',
+                'size'            => 10,
+                'expectedContent' => "content\0\0\0",
+            ],
+            'truncate to smaller size and rewind' => [
+                'existingContent' => 'content',
+                'size'            => 4,
+                'expectedContent' => 'cont',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string,array{content:string,seek:int,whence:int,expectedOffset:int,expectedContent:string}>
+     */
+    public static function getDataForSeek() : array {
+        return [
+            'set' => [
+                'content'         => 'file content',
+                'seek'            => 5,
+                'whence'          => SEEK_SET,
+                'expectedOffset'  => 5,
+                'expectedContent' => 'file content',
+            ],
+            'cur' => [
+                'content'         => 'file content',
+                'seek'            => 3,
+                'whence'          => SEEK_CUR,
+                'expectedOffset'  => 3,
+                'expectedContent' => 'file content',
+            ],
+            'end' => [
+                'content'         => 'file content',
+                'seek'            => 3,
+                'whence'          => SEEK_END,
+                'expectedOffset'  => 15,
+                'expectedContent' => "file content\0\0\0",
+            ],
+        ];
     }
 }

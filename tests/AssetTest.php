@@ -85,22 +85,6 @@ class AssetTest extends TestCase {
     }
 
     /**
-     * @return array<string,array<string,string>>
-     */
-    public function getInvalidAssetNames() : array {
-        return [
-            'empty name' => [
-                'name'             => ' ',
-                'exceptionMessage' => 'Name can not be empty',
-            ],
-            'dir separators' => [
-                'name'             => 'foo/bar',
-                'exceptionMessage' => 'Name can not contain a directory separator',
-            ],
-        ];
-    }
-
-    /**
      * @dataProvider getInvalidAssetNames
      * @covers ::setName
      */
@@ -262,9 +246,122 @@ class AssetTest extends TestCase {
     }
 
     /**
-     * @return array<string,array<string,mixed>>
+     * @dataProvider getAccessCheckDataForReadable
+     * @covers ::isReadable
      */
-    public function getAccessCheckDataForReadable() : array {
+    public function testCanCheckIfAssetIsReadable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
+        $file = new File('filename');
+        $file->setUid($ownerUid);
+        $file->setGid($ownerGid);
+        $file->setMode($mode);
+
+        $this->assertSame($expectedResult, $file->isReadable($checkUid, $checkGid), 'Wrong result for isReadable');
+    }
+
+    /**
+     * @covers ::isReadable
+     */
+    public function testAssetIsNotReadableWhenParentIsNotReadable() : void {
+        $dir = new Directory('dir');
+        $dir->setUid(1);
+        $dir->setGid(1);
+        $dir->setMode(0770);
+
+        $file = new File('file');
+        $file->setUid(2);
+        $file->setGid(2);
+        $file->setMode(0777);
+        $file->setParent($dir);
+
+        $this->assertTrue($file->isReadable(1, 1), 'Expected user to be able to read file');
+        $this->assertFalse($file->isReadable(2, 2), 'Did not expect user to be able to read');
+    }
+
+    /**
+     * @dataProvider getAccessCheckDataForWritable
+     * @covers ::isWritable
+     */
+    public function testCanCheckIfAssetIsWritable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
+        $file = new File('filename');
+        $file->setUid($ownerUid);
+        $file->setGid($ownerGid);
+        $file->setMode($mode);
+
+        $this->assertSame($expectedResult, $file->isWritable($checkUid, $checkGid), 'Wrong result for isWritable');
+    }
+
+    /**
+     * @dataProvider getAccessCheckDataForExecutable
+     * @covers ::isExecutable
+     */
+    public function testCanCheckIfAssetIsExecutable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
+        $file = new File('filename');
+        $file->setUid($ownerUid);
+        $file->setGid($ownerGid);
+        $file->setMode($mode);
+
+        $this->assertSame($expectedResult, $file->isExecutable($checkUid, $checkGid), 'Wrong result for isExecutable');
+    }
+
+    /**
+     * @covers ::isOwnedByUser
+     */
+    public function testCanCheckIfAssetIsOwnedByUser() : void {
+        $asset = new File('filename');
+        $this->assertTrue($asset->isOwnedByUser(0), 'Expected UID 0 to own the asset');
+        $asset->setUid(1);
+        $this->assertFalse($asset->isOwnedByUser(0), 'Did not expect UID 0 to own the asset');
+        $this->assertTrue($asset->isOwnedByUser(1), 'Expected UID 1 to own the asset');
+    }
+
+    /**
+     * @covers ::getDevice
+     * @covers TestFs\Device::getDevice
+     */
+    public function testCanGetDevice() : void {
+        $file   = new File('name');
+        $dir    = new Directory('name');
+        $device = new Device('some name');
+        $dir->addChild($file);
+        $device->addChild($dir);
+
+        $this->assertSame($device, $file->getDevice(), 'Incorrect instance returned');
+        $this->assertSame($device, $dir->getDevice(), 'Incorrect instance returned');
+        $this->assertSame($device, $device->getDevice(), 'Incorrect instance returned');
+    }
+
+    /**
+     * @covers ::getDevice
+     */
+    public function testReturnNullIfThereIsNoDevice() : void {
+        $file = new File('name');
+        $dir  = new Directory('name');
+        $dir->addChild($file);
+
+        $this->assertNull($file->getDevice(), 'Did not expect any device');
+        $this->assertNull($dir->getDevice(), 'Did not expect any device');
+    }
+
+    /**
+     * @return array<string,array{name:string,exceptionMessage:string}>
+     */
+    public static function getInvalidAssetNames() : array {
+        return [
+            'empty name' => [
+                'name'             => ' ',
+                'exceptionMessage' => 'Name can not be empty',
+            ],
+            'dir separators' => [
+                'name'             => 'foo/bar',
+                'exceptionMessage' => 'Name can not contain a directory separator',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string,array{ownerUid:int,ownerGid:int,mode:int,checkUid:int,checkGid:int,expectedResult:bool}>
+     */
+    public static function getAccessCheckDataForReadable() : array {
         return [
             'root user' => [
                 'ownerUid'       => 1,
@@ -318,41 +415,9 @@ class AssetTest extends TestCase {
     }
 
     /**
-     * @dataProvider getAccessCheckDataForReadable
-     * @covers ::isReadable
+     * @return array<string,array{ownerUid:int,ownerGid:int,mode:int,checkUid:int,checkGid:int,expectedResult:bool}>
      */
-    public function testCanCheckIfAssetIsReadable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
-        $file = new File('filename');
-        $file->setUid($ownerUid);
-        $file->setGid($ownerGid);
-        $file->setMode($mode);
-
-        $this->assertSame($expectedResult, $file->isReadable($checkUid, $checkGid), 'Wrong result for isReadable');
-    }
-
-    /**
-     * @covers ::isReadable
-     */
-    public function testAssetIsNotReadableWhenParentIsNotReadable() : void {
-        $dir = new Directory('dir');
-        $dir->setUid(1);
-        $dir->setGid(1);
-        $dir->setMode(0770);
-
-        $file = new File('file');
-        $file->setUid(2);
-        $file->setGid(2);
-        $file->setMode(0777);
-        $file->setParent($dir);
-
-        $this->assertTrue($file->isReadable(1, 1), 'Expected user to be able to read file');
-        $this->assertFalse($file->isReadable(2, 2), 'Did not expect user to be able to read');
-    }
-
-    /**
-     * @return array<string,array<string,mixed>>
-     */
-    public function getAccessCheckDataForWritable() : array {
+    public static function getAccessCheckDataForWritable() : array {
         return [
             'root user' => [
                 'ownerUid'       => 1,
@@ -406,22 +471,9 @@ class AssetTest extends TestCase {
     }
 
     /**
-     * @dataProvider getAccessCheckDataForWritable
-     * @covers ::isWritable
+     * @return array<string,array{ownerUid:int,ownerGid:int,mode:int,checkUid:int,checkGid:int,expectedResult:bool}>
      */
-    public function testCanCheckIfAssetIsWritable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
-        $file = new File('filename');
-        $file->setUid($ownerUid);
-        $file->setGid($ownerGid);
-        $file->setMode($mode);
-
-        $this->assertSame($expectedResult, $file->isWritable($checkUid, $checkGid), 'Wrong result for isWritable');
-    }
-
-    /**
-     * @return array<string,array<string,mixed>>
-     */
-    public function getAccessCheckDataForExecutable() : array {
+    public static function getAccessCheckDataForExecutable() : array {
         return [
             'root user' => [
                 'ownerUid'       => 1,
@@ -472,57 +524,5 @@ class AssetTest extends TestCase {
                 'expectedResult' => false,
             ],
         ];
-    }
-
-    /**
-     * @dataProvider getAccessCheckDataForExecutable
-     * @covers ::isExecutable
-     */
-    public function testCanCheckIfAssetIsExecutable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
-        $file = new File('filename');
-        $file->setUid($ownerUid);
-        $file->setGid($ownerGid);
-        $file->setMode($mode);
-
-        $this->assertSame($expectedResult, $file->isExecutable($checkUid, $checkGid), 'Wrong result for isExecutable');
-    }
-
-    /**
-     * @covers ::isOwnedByUser
-     */
-    public function testCanCheckIfAssetIsOwnedByUser() : void {
-        $asset = new File('filename');
-        $this->assertTrue($asset->isOwnedByUser(0), 'Expected UID 0 to own the asset');
-        $asset->setUid(1);
-        $this->assertFalse($asset->isOwnedByUser(0), 'Did not expect UID 0 to own the asset');
-        $this->assertTrue($asset->isOwnedByUser(1), 'Expected UID 1 to own the asset');
-    }
-
-    /**
-     * @covers ::getDevice
-     * @covers TestFs\Device::getDevice
-     */
-    public function testCanGetDevice() : void {
-        $file   = new File('name');
-        $dir    = new Directory('name');
-        $device = new Device('some name');
-        $dir->addChild($file);
-        $device->addChild($dir);
-
-        $this->assertSame($device, $file->getDevice(), 'Incorrect instance returned');
-        $this->assertSame($device, $dir->getDevice(), 'Incorrect instance returned');
-        $this->assertSame($device, $device->getDevice(), 'Incorrect instance returned');
-    }
-
-    /**
-     * @covers ::getDevice
-     */
-    public function testReturnNullIfThereIsNoDevice() : void {
-        $file = new File('name');
-        $dir  = new Directory('name');
-        $dir->addChild($file);
-
-        $this->assertNull($file->getDevice(), 'Did not expect any device');
-        $this->assertNull($dir->getDevice(), 'Did not expect any device');
     }
 }

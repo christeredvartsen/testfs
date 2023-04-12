@@ -8,38 +8,6 @@ use PHPUnit\Framework\TestCase;
  */
 class FopenModeTest extends TestCase {
     /**
-     * @return array<int,array<string,mixed>>
-     */
-    public function getModeData() : array {
-        return [
-            [
-                'mode'             => 'r',
-                'extended'         => true,
-                'extra'            => null,
-                'expectedRead'     => true,
-                'expectedWrite'    => true,
-                'expectedOffset'   => 0,
-                'expectedTruncate' => false,
-                'expectedCreate'   => false,
-                'expectedBinary'   => false,
-                'expectedText'     => false
-            ],
-            [
-                'mode'             => 'w',
-                'extended'         => false,
-                'extra'            => null,
-                'expectedRead'     => false,
-                'expectedWrite'    => true,
-                'expectedOffset'   => 0,
-                'expectedTruncate' => true,
-                'expectedCreate'   => true,
-                'expectedBinary'   => false,
-                'expectedText'     => false
-            ],
-        ];
-    }
-
-    /**
      * @covers ::__construct
      * @covers ::read
      * @covers ::write
@@ -60,5 +28,37 @@ class FopenModeTest extends TestCase {
         $this->assertSame($expectedOffset, $mode->offset(), 'Incorrect offset value');
         $this->assertSame($expectedBinary, $mode->binary(), 'Incorrect binary value');
         $this->assertSame($expectedText, $mode->text(), 'Incorrect text value');
+    }
+
+    /**
+     * @return array<string,array{mode:string,extended:bool,extra:?string,expectedRead:bool,expectedWrite:bool,expectedOffset:int,expectedTruncate:bool,expectedCreate:bool,expectedBinary:bool,expectedText:bool}>
+     */
+    public static function getModeData() : array {
+        return [
+            'read' => [
+                'mode'             => 'r',
+                'extended'         => true,
+                'extra'            => null,
+                'expectedRead'     => true,
+                'expectedWrite'    => true,
+                'expectedOffset'   => 0,
+                'expectedTruncate' => false,
+                'expectedCreate'   => false,
+                'expectedBinary'   => false,
+                'expectedText'     => false
+            ],
+            'write' => [
+                'mode'             => 'w',
+                'extended'         => false,
+                'extra'            => null,
+                'expectedRead'     => false,
+                'expectedWrite'    => true,
+                'expectedOffset'   => 0,
+                'expectedTruncate' => true,
+                'expectedCreate'   => true,
+                'expectedBinary'   => false,
+                'expectedText'     => false
+            ],
+        ];
     }
 }
