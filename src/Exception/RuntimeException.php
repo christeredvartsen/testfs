@@ -3,4 +3,6 @@ namespace TestFs\Exception;
 
 use RuntimeException as SplRuntimeException;
 
-class RuntimeException extends SplRuntimeException {}
+class RuntimeException extends SplRuntimeException
+{
+}

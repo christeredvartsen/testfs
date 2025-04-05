@@ -2,19 +2,22 @@
 namespace TestFs;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use TestFs\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use TestFs\Exception\InvalidArgumentException;
 
 #[CoversClass(Device::class)]
-class DeviceTest extends TestCase {
-    public function testCanSetAndGetSize() : void {
+class DeviceTest extends TestCase
+{
+    public function testCanSetAndGetSize(): void
+    {
         $dir = new Device('name');
         $this->assertSame(Device::UNLIMITED_SIZE, $dir->getDeviceSize(), 'Unexpected default size');
         $dir->setDeviceSize(123);
         $this->assertSame(123, $dir->getDeviceSize(), 'Expected size to be updated');
     }
 
-    public function testThrowsExceptionWhenSettingSizeTooSmall() : void {
+    public function testThrowsExceptionWhenSettingSizeTooSmall(): void
+    {
         $dir = new Device('name');
         $dir->addChild(new File('name', 'this is my content'));
 
@@ -22,7 +25,8 @@ class DeviceTest extends TestCase {
         $dir->setDeviceSize(2);
     }
 
-    public function testCanGetAvailableSize() : void {
+    public function testCanGetAvailableSize(): void
+    {
         $dir = new Device('name');
         $this->assertSame(Device::UNLIMITED_SIZE, $dir->getAvailableSize(), 'Unexpected available size');
         $dir->setDeviceSize(20);

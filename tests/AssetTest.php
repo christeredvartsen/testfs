@@ -3,13 +3,15 @@ namespace TestFs;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use TestFs\Exception\InvalidArgumentException;
 use TestFs\Exception\RuntimeException;
-use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Asset::class)]
-class AssetTest extends TestCase {
-    public function testConstructor() : void {
+class AssetTest extends TestCase
+{
+    public function testConstructor(): void
+    {
         $asset = new File('name');
         $this->assertTrue(0 < $atime = $asset->getLastAccessed(), 'Last accessed time not set');
         $this->assertTrue(0 < $mtime = $asset->getLastModified(), 'Last modified time not set');
@@ -17,19 +19,22 @@ class AssetTest extends TestCase {
         $this->assertTrue(($atime === $mtime) && ($mtime === $ctime), 'Timestamps should be the same');
     }
 
-    public function testCanSetAndGetUid() : void {
+    public function testCanSetAndGetUid(): void
+    {
         $asset = new Directory('name');
         $asset->setUid(123);
         $this->assertSame(123, $asset->getUid(), 'Incorrect UID');
     }
 
-    public function testCanSetAndGetGid() : void {
+    public function testCanSetAndGetGid(): void
+    {
         $asset = new Directory('name');
         $asset->setGid(123);
         $this->assertSame(123, $asset->getGid(), 'Incorrect GID');
     }
 
-    public function testCanSetAndGetParent() : void {
+    public function testCanSetAndGetParent(): void
+    {
         $asset = new File('name');
         $this->assertNull($asset->getParent(), 'Expected parent to be null');
         $parent = new Directory('name');
@@ -37,18 +42,21 @@ class AssetTest extends TestCase {
         $this->assertSame($parent, $asset->getParent(), 'Incorrect parent instance');
     }
 
-    public function testCanSetAndGetMode() : void {
+    public function testCanSetAndGetMode(): void
+    {
         $asset = new File('name');
         $asset->setMode(0600);
         $this->assertSame(0600, $asset->getMode(), 'Incorrect mode');
     }
 
-    public function testCanGetAssetType() : void {
+    public function testCanGetAssetType(): void
+    {
         $this->assertSame(0100000, (new File('name'))->getType(), 'Incorrect default mode');
         $this->assertSame(0040000, (new Directory('name'))->getType(), 'Incorrect default mode');
     }
 
-    public function testCanSetAndGetName() : void {
+    public function testCanSetAndGetName(): void
+    {
         $asset = new File('name');
         $this->assertSame('name', $asset->getName(), 'Incorrect name');
         $asset->setName('newname');
@@ -56,12 +64,14 @@ class AssetTest extends TestCase {
     }
 
     #[DataProvider('getInvalidAssetNames')]
-    public function testThrowsExceptionOnInvalidName(string $name, string $exceptionMessage) : void {
+    public function testThrowsExceptionOnInvalidName(string $name, string $exceptionMessage): void
+    {
         $this->expectExceptionObject(new InvalidArgumentException($exceptionMessage));
         new File($name);
     }
 
-    public function testThrowsExceptionWhenNameAlreadyExistsWhenSettingParent() : void {
+    public function testThrowsExceptionWhenNameAlreadyExistsWhenSettingParent(): void
+    {
         $parent = new Directory('parent');
         $parent->addChild(new File('name'));
 
@@ -69,7 +79,8 @@ class AssetTest extends TestCase {
         (new File('name'))->setParent($parent);
     }
 
-    public function testThrowsExceptionWhenNameAlreadyExistsWhenChangingName() : void {
+    public function testThrowsExceptionWhenNameAlreadyExistsWhenChangingName(): void
+    {
         $asset = new File('name');
         $parent = new Directory('parent');
         $parent->addChild(new File('othername'));
@@ -79,46 +90,53 @@ class AssetTest extends TestCase {
         $asset->setName('othername');
     }
 
-    public function testCanUpdateLastAccessed() : void {
+    public function testCanUpdateLastAccessed(): void
+    {
         $time = time();
         $asset = new File('name');
         $asset->updateLastAccessed($time);
         $this->assertSame($time, $asset->getLastAccessed(), 'Last accessed timestamp does not match');
     }
 
-    public function testCanUpdateLastAccessedToCurrentTimestamp() : void {
+    public function testCanUpdateLastAccessedToCurrentTimestamp(): void
+    {
         $asset = new File('name');
         $asset->updateLastAccessed();
         $this->assertTrue(0 < $asset->getLastAccessed(), 'Expected last accessed timestamp to have a value');
     }
 
-    public function testCanUpdateLastModified() : void {
+    public function testCanUpdateLastModified(): void
+    {
         $time = time();
         $asset = new File('name');
         $asset->updateLastModified($time);
         $this->assertSame($time, $asset->getLastModified(), 'Last modified timestamp does not match');
     }
 
-    public function testCanUpdateLastModifiedToCurrentTimestamp() : void {
+    public function testCanUpdateLastModifiedToCurrentTimestamp(): void
+    {
         $asset = new File('name');
         $asset->updateLastModified();
         $this->assertTrue(0 < $asset->getLastModified(), 'Expected last modified timestamp to have a value');
     }
 
-    public function testCanUpdateLastMetadataModified() : void {
+    public function testCanUpdateLastMetadataModified(): void
+    {
         $time = time();
         $asset = new File('name');
         $asset->updateLastMetadataModified($time);
         $this->assertSame($time, $asset->getLastMetadataModified(), 'Last metadata modified timestamp does not match');
     }
 
-    public function testCanUpdateLastMetadataModifiedToCurrentTimestamp() : void {
+    public function testCanUpdateLastMetadataModifiedToCurrentTimestamp(): void
+    {
         $asset = new File('name');
         $asset->updateLastMetadataModified();
         $this->assertTrue(0 < $asset->getLastMetadataModified(), 'Expected last metadata modified timestamp to have a value');
     }
 
-    public function testCanDeleteFromParent() : void {
+    public function testCanDeleteFromParent(): void
+    {
         $directory = $this->createMock(Directory::class);
         $directory
             ->expects($this->once())
@@ -129,12 +147,14 @@ class AssetTest extends TestCase {
         $file->delete();
     }
 
-    public function testThrowsExceptionWhenDeletingWithNoParent() : void {
+    public function testThrowsExceptionWhenDeletingWithNoParent(): void
+    {
         $this->expectExceptionObject(new RuntimeException('The asset does not have a parent'));
         (new File('name'))->delete();
     }
 
-    public function testCanDetachFromParent() : void {
+    public function testCanDetachFromParent(): void
+    {
         $dir = $this->createMock(Directory::class);
         $dir
             ->expects($this->once())
@@ -151,7 +171,8 @@ class AssetTest extends TestCase {
         $file->detach();
     }
 
-    public function testSettingParentRemovesAssetFromExistingParent() : void {
+    public function testSettingParentRemovesAssetFromExistingParent(): void
+    {
         $dir1 = new Directory('dir1');
         $dir2 = new Directory('dir2');
         $file = new File('file');
@@ -163,7 +184,8 @@ class AssetTest extends TestCase {
         $this->assertTrue($dir2->hasChild('file'), 'Expected directory to have file');
     }
 
-    public function testSetExistingParentReturnsEarly() : void {
+    public function testSetExistingParentReturnsEarly(): void
+    {
         $directory = $this->createMock(Directory::class);
         $directory
             ->expects($this->once())
@@ -175,7 +197,8 @@ class AssetTest extends TestCase {
     }
 
     #[DataProvider('getAccessCheckDataForReadable')]
-    public function testCanCheckIfAssetIsReadable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
+    public function testCanCheckIfAssetIsReadable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult): void
+    {
         $file = new File('filename');
         $file->setUid($ownerUid);
         $file->setGid($ownerGid);
@@ -184,7 +207,8 @@ class AssetTest extends TestCase {
         $this->assertSame($expectedResult, $file->isReadable($checkUid, $checkGid), 'Wrong result for isReadable');
     }
 
-    public function testAssetIsNotReadableWhenParentIsNotReadable() : void {
+    public function testAssetIsNotReadableWhenParentIsNotReadable(): void
+    {
         $dir = new Directory('dir');
         $dir->setUid(1);
         $dir->setGid(1);
@@ -201,7 +225,8 @@ class AssetTest extends TestCase {
     }
 
     #[DataProvider('getAccessCheckDataForWritable')]
-    public function testCanCheckIfAssetIsWritable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
+    public function testCanCheckIfAssetIsWritable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult): void
+    {
         $file = new File('filename');
         $file->setUid($ownerUid);
         $file->setGid($ownerGid);
@@ -211,7 +236,8 @@ class AssetTest extends TestCase {
     }
 
     #[DataProvider('getAccessCheckDataForExecutable')]
-    public function testCanCheckIfAssetIsExecutable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
+    public function testCanCheckIfAssetIsExecutable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult): void
+    {
         $file = new File('filename');
         $file->setUid($ownerUid);
         $file->setGid($ownerGid);
@@ -220,7 +246,8 @@ class AssetTest extends TestCase {
         $this->assertSame($expectedResult, $file->isExecutable($checkUid, $checkGid), 'Wrong result for isExecutable');
     }
 
-    public function testCanCheckIfAssetIsOwnedByUser() : void {
+    public function testCanCheckIfAssetIsOwnedByUser(): void
+    {
         $asset = new File('filename');
         $this->assertTrue($asset->isOwnedByUser(0), 'Expected UID 0 to own the asset');
         $asset->setUid(1);
@@ -228,7 +255,8 @@ class AssetTest extends TestCase {
         $this->assertTrue($asset->isOwnedByUser(1), 'Expected UID 1 to own the asset');
     }
 
-    public function testCanGetDevice() : void {
+    public function testCanGetDevice(): void
+    {
         $file   = new File('name');
         $dir    = new Directory('name');
         $device = new Device('some name');
@@ -240,7 +268,8 @@ class AssetTest extends TestCase {
         $this->assertSame($device, $device->getDevice(), 'Incorrect instance returned');
     }
 
-    public function testReturnNullIfThereIsNoDevice() : void {
+    public function testReturnNullIfThereIsNoDevice(): void
+    {
         $file = new File('name');
         $dir  = new Directory('name');
         $dir->addChild($file);
@@ -252,7 +281,8 @@ class AssetTest extends TestCase {
     /**
      * @return array<string,array{name:string,exceptionMessage:string}>
      */
-    public static function getInvalidAssetNames() : array {
+    public static function getInvalidAssetNames(): array
+    {
         return [
             'empty name' => [
                 'name'             => ' ',
@@ -268,7 +298,8 @@ class AssetTest extends TestCase {
     /**
      * @return array<string,array{ownerUid:int,ownerGid:int,mode:int,checkUid:int,checkGid:int,expectedResult:bool}>
      */
-    public static function getAccessCheckDataForReadable() : array {
+    public static function getAccessCheckDataForReadable(): array
+    {
         return [
             'root user' => [
                 'ownerUid'       => 1,
@@ -324,7 +355,8 @@ class AssetTest extends TestCase {
     /**
      * @return array<string,array{ownerUid:int,ownerGid:int,mode:int,checkUid:int,checkGid:int,expectedResult:bool}>
      */
-    public static function getAccessCheckDataForWritable() : array {
+    public static function getAccessCheckDataForWritable(): array
+    {
         return [
             'root user' => [
                 'ownerUid'       => 1,
@@ -380,7 +412,8 @@ class AssetTest extends TestCase {
     /**
      * @return array<string,array{ownerUid:int,ownerGid:int,mode:int,checkUid:int,checkGid:int,expectedResult:bool}>
      */
-    public static function getAccessCheckDataForExecutable() : array {
+    public static function getAccessCheckDataForExecutable(): array
+    {
         return [
             'root user' => [
                 'ownerUid'       => 1,

@@ -4,7 +4,8 @@ namespace TestFs;
 use TestFs\Exception\InvalidArgumentException;
 use TestFs\Exception\RuntimeException;
 
-abstract class Asset {
+abstract class Asset
+{
     private string $name;
     private ?Directory $parent = null;
     protected int $atime;
@@ -19,7 +20,8 @@ abstract class Asset {
      *
      * @param string $name The name of the asset
      */
-    public function __construct(string $name) {
+    public function __construct(string $name)
+    {
         $this->setName($name);
 
         $time        = time();
@@ -36,21 +38,21 @@ abstract class Asset {
      *
      * @return int
      */
-    abstract public function getType() : int;
+    abstract public function getType(): int;
 
     /**
      * Get the size of the asset, including child assets
      *
      * @return int
      */
-    abstract public function getSize() : int;
+    abstract public function getSize(): int;
 
     /**
      * Get the default mode of the asset
      *
      * @return int
      */
-    abstract protected function getDefaultMode() : int;
+    abstract protected function getDefaultMode(): int;
 
     /**
      * Remove the asset
@@ -58,7 +60,8 @@ abstract class Asset {
      * @throws RuntimeException Throws an exception if the file does not have a parent
      * @return void
      */
-    public function delete() : void {
+    public function delete(): void
+    {
         $parent = $this->getParent();
 
         if (null === $parent) {
@@ -73,7 +76,8 @@ abstract class Asset {
      *
      * @return int
      */
-    public function getLastAccessed() : int {
+    public function getLastAccessed(): int
+    {
         return $this->atime;
     }
 
@@ -82,7 +86,8 @@ abstract class Asset {
      *
      * @param int $atime The timestamp to set
      */
-    public function updateLastAccessed(int $atime = 0) : void {
+    public function updateLastAccessed(int $atime = 0): void
+    {
         if (!$atime) {
             $atime = time();
         }
@@ -95,7 +100,8 @@ abstract class Asset {
      *
      * @return int
      */
-    public function getLastModified() : int {
+    public function getLastModified(): int
+    {
         return $this->mtime;
     }
 
@@ -104,7 +110,8 @@ abstract class Asset {
      *
      * @param int $mtime The timestamp to set
      */
-    public function updateLastModified(int $mtime = 0) : void {
+    public function updateLastModified(int $mtime = 0): void
+    {
         if (!$mtime) {
             $mtime = time();
         }
@@ -117,7 +124,8 @@ abstract class Asset {
      *
      * @return int
      */
-    public function getLastMetadataModified() : int {
+    public function getLastMetadataModified(): int
+    {
         return $this->ctime;
     }
 
@@ -126,7 +134,8 @@ abstract class Asset {
      *
      * @param int $ctime The timestamp to set
      */
-    public function updateLastMetadataModified(int $ctime = 0) : void {
+    public function updateLastMetadataModified(int $ctime = 0): void
+    {
         if (!$ctime) {
             $ctime = time();
         }
@@ -140,7 +149,8 @@ abstract class Asset {
      * @param int $uid The UID to set
      * @return void
      */
-    public function setUid(int $uid) : void {
+    public function setUid(int $uid): void
+    {
         $this->uid = $uid;
         $this->updateLastMetadataModified();
     }
@@ -151,7 +161,8 @@ abstract class Asset {
      * @param int $gid The GID to set
      * @return void
      */
-    public function setGid(int $gid) : void {
+    public function setGid(int $gid): void
+    {
         $this->gid = $gid;
         $this->updateLastMetadataModified();
     }
@@ -161,7 +172,8 @@ abstract class Asset {
      *
      * @return int
      */
-    public function getUid() : int {
+    public function getUid(): int
+    {
         return $this->uid;
     }
 
@@ -170,7 +182,8 @@ abstract class Asset {
      *
      * @return int
      */
-    public function getGid() : int {
+    public function getGid(): int
+    {
         return $this->gid;
     }
 
@@ -181,14 +194,15 @@ abstract class Asset {
      * @throws InvalidArgumentException
      * @return void
      */
-    public function setName(string $name) : void {
+    public function setName(string $name): void
+    {
         $name = trim($name);
 
         if (empty($name)) {
             throw new InvalidArgumentException('Name can not be empty');
-        } else if (false !== strpos($name, DIRECTORY_SEPARATOR)) {
+        } elseif (false !== strpos($name, DIRECTORY_SEPARATOR)) {
             throw new InvalidArgumentException('Name can not contain a directory separator');
-        } else if ($this->parent instanceof Directory && $this->parent->hasChild($name)) {
+        } elseif ($this->parent instanceof Directory && $this->parent->hasChild($name)) {
             throw new InvalidArgumentException('There exists an asset with the same name in this directory');
         }
 
@@ -200,7 +214,8 @@ abstract class Asset {
      *
      * @return string
      */
-    public function getName() : string {
+    public function getName(): string
+    {
         return $this->name;
     }
 
@@ -209,7 +224,8 @@ abstract class Asset {
      *
      * @return void
      */
-    public function detach() : void {
+    public function detach(): void
+    {
         if (null === $this->parent) {
             return;
         }
@@ -226,7 +242,8 @@ abstract class Asset {
      * @throws InvalidArgumentException
      * @return void
      */
-    public function setParent(Directory $parent, bool $addAsChild = true) : void {
+    public function setParent(Directory $parent, bool $addAsChild = true): void
+    {
         if ($parent === $this->getParent()) {
             return;
         }
@@ -253,7 +270,8 @@ abstract class Asset {
      *
      * @return ?Directory
      */
-    public function getParent() : ?Directory {
+    public function getParent(): ?Directory
+    {
         return $this->parent;
     }
 
@@ -262,7 +280,8 @@ abstract class Asset {
      *
      * @return ?Device
      */
-    public function getDevice() : ?Device {
+    public function getDevice(): ?Device
+    {
         return null === $this->parent ? null : $this->parent->getDevice();
     }
 
@@ -272,7 +291,8 @@ abstract class Asset {
      * @param int $mode The mode to set
      * @return void
      */
-    public function setMode(int $mode) : void {
+    public function setMode(int $mode): void
+    {
         $this->mode = $mode;
     }
 
@@ -281,7 +301,8 @@ abstract class Asset {
      *
      * @return int
      */
-    public function getMode() : int {
+    public function getMode(): int
+    {
         return $this->mode;
     }
 
@@ -292,7 +313,8 @@ abstract class Asset {
      * @param int $gid The GID to check
      * @return bool
      */
-    public function isReadable(int $uid, int $gid) : bool {
+    public function isReadable(int $uid, int $gid): bool
+    {
         if (0 === $uid || 0 === $gid) {
             return true;
         }
@@ -321,7 +343,8 @@ abstract class Asset {
      * @param int $gid The GID to check
      * @return bool
      */
-    public function isWritable(int $uid, int $gid) : bool {
+    public function isWritable(int $uid, int $gid): bool
+    {
         if (0 === $uid || 0 === $gid) {
             return true;
         }
@@ -344,7 +367,8 @@ abstract class Asset {
      * @param int $gid The GID to check
      * @return bool
      */
-    public function isExecutable(int $uid, int $gid) : bool {
+    public function isExecutable(int $uid, int $gid): bool
+    {
         if ($this->uid === $uid) {
             $check = 0100;
         } elseif ($this->gid === $gid) {
@@ -362,7 +386,8 @@ abstract class Asset {
      * @param int $uid The UID to check
      * @return bool
      */
-    public function isOwnedByUser(int $uid) : bool {
+    public function isOwnedByUser(int $uid): bool
+    {
         return $uid === $this->uid;
     }
 }

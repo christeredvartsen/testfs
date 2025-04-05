@@ -4,14 +4,16 @@ namespace TestFs;
 /**
  * @codeCoverageIgnore
  */
-class AssetFactory {
+class AssetFactory
+{
     /**
      * Create a directory asset
      *
      * @param string $name Name of the directory
      * @return Directory
      */
-    public function directory(string $name) : Directory {
+    public function directory(string $name): Directory
+    {
         return new Directory($name);
     }
 
@@ -22,7 +24,8 @@ class AssetFactory {
      * @param string $content Content of the file
      * @return File
      */
-    public function file(string $name, string $content = '') : File {
+    public function file(string $name, string $content = ''): File
+    {
         return new File($name, $content);
     }
 }

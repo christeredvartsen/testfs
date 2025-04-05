@@ -5,8 +5,10 @@ use Closure;
 use Exception;
 use RuntimeException;
 
-trait ErrorHandler {
-    public static function setUpBeforeClass(): void {
+trait ErrorHandler
+{
+    public static function setUpBeforeClass(): void
+    {
         set_error_handler(
             function (int $errno, string $errstr): void {
                 if (0 !== error_reporting()) {
@@ -20,7 +22,8 @@ trait ErrorHandler {
         );
     }
 
-    private function ignoreError(Closure $func): mixed {
+    private function ignoreError(Closure $func): mixed
+    {
         $level = error_reporting(0);
         /** @var mixed */
         $result = $func();
@@ -29,14 +32,18 @@ trait ErrorHandler {
     }
 }
 
-class Notice extends Exception {
-    public function __construct(string $msg) {
+class Notice extends Exception
+{
+    public function __construct(string $msg)
+    {
         parent::__construct($msg, E_USER_NOTICE);
     }
 }
 
-class Warning extends Exception {
-    public function __construct(string $msg) {
+class Warning extends Exception
+{
+    public function __construct(string $msg)
+    {
         parent::__construct($msg, E_USER_WARNING);
     }
 }

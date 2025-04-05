@@ -3,8 +3,9 @@ namespace TestFs;
 
 use TestFs\Exception\InvalidArgumentException;
 
-class Device extends Directory {
-    const UNLIMITED_SIZE = -1;
+class Device extends Directory
+{
+    public const UNLIMITED_SIZE = -1;
 
     /**
      * Available storage space
@@ -18,7 +19,8 @@ class Device extends Directory {
      * @throws InvalidArgumentException
      * @return void
      */
-    public function setDeviceSize(int $size) : void {
+    public function setDeviceSize(int $size): void
+    {
         if ($size < $this->getSize()) {
             throw new InvalidArgumentException('Size of the files in the virtual filesystem already exceeds the given size');
         }
@@ -31,7 +33,8 @@ class Device extends Directory {
      *
      * @return int
      */
-    public function getDeviceSize() : int {
+    public function getDeviceSize(): int
+    {
         return $this->deviceSize;
     }
 
@@ -40,7 +43,8 @@ class Device extends Directory {
      *
      * @return int
      */
-    public function getAvailableSize() : int {
+    public function getAvailableSize(): int
+    {
         if (self::UNLIMITED_SIZE === $this->deviceSize) {
             return self::UNLIMITED_SIZE;
         }
@@ -53,7 +57,8 @@ class Device extends Directory {
      *
      * @return Device
      */
-    public function getDevice(): Device {
+    public function getDevice(): Device
+    {
         return $this;
     }
 }

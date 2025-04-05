@@ -2,23 +2,27 @@
 namespace TestFs;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use TestFs\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use TestFs\Exception\InvalidArgumentException;
 use TestFs\Exception\NoSpaceLeftOnDeviceException;
 
 #[CoversClass(Directory::class)]
-class DirectoryTest extends TestCase {
-    public function testCanGetFileType() : void {
+class DirectoryTest extends TestCase
+{
+    public function testCanGetFileType(): void
+    {
         $this->assertSame(0040000, (new Directory('name'))->getType(), 'Incorrect directory type');
     }
 
-    public function testIsEmpty() : void {
+    public function testIsEmpty(): void
+    {
         $dir = new Directory('name');
         $this->assertSame([], $dir->getChildren(), 'Did not expect any children');
         $this->assertTrue($dir->isEmpty(), 'Expected directory to be empty');
     }
 
-    public function testCanAddAndGetChildren() : void {
+    public function testCanAddAndGetChildren(): void
+    {
         $dir = new Directory('name');
 
         $childDir = $this->createConfiguredMock(Directory::class, ['getName' => 'childDir']);
@@ -41,7 +45,8 @@ class DirectoryTest extends TestCase {
         $this->assertFalse($dir->hasChild('foobar'), 'Did not expect directory to have child');
     }
 
-    public function testThrowsExceptionWhenAddingChildWithANameThatAlreadyExists() : void {
+    public function testThrowsExceptionWhenAddingChildWithANameThatAlreadyExists(): void
+    {
         $dir = new Directory('name');
 
         $childDir = $this->createConfiguredMock(Directory::class, ['getName' => 'name']);
@@ -53,7 +58,8 @@ class DirectoryTest extends TestCase {
         $dir->addChild($childFile);
     }
 
-    public function testCanRemoveChild() : void {
+    public function testCanRemoveChild(): void
+    {
         $dir = new Directory('name');
 
         $child = $this->createConfiguredMock(Directory::class, ['getName' => 'name']);
@@ -65,14 +71,16 @@ class DirectoryTest extends TestCase {
         $this->assertFalse($dir->hasChild('name'), 'Did not expect directory to have child');
     }
 
-    public function testThrowsExceptionWhenDeletingAChildThatDoesNotExist() : void {
+    public function testThrowsExceptionWhenDeletingAChildThatDoesNotExist(): void
+    {
         $dir = new Directory('name');
 
         $this->expectExceptionObject(new InvalidArgumentException('Child "name" does not exist'));
         $dir->removeChild('name');
     }
 
-    public function testCanGetSize() : void {
+    public function testCanGetSize(): void
+    {
         $dir = new Directory('parent');
         $childDir = new Directory('child');
         $file1 = new File('file1', 'some content');
@@ -87,11 +95,13 @@ class DirectoryTest extends TestCase {
         $this->assertSame(46, $dir->getSize(), 'Incorrect file size');
     }
 
-    public function testGetDefaultMode() : void {
+    public function testGetDefaultMode(): void
+    {
         $this->assertSame(0777, (new Directory('name'))->getMode(), 'Incorrect mode');
     }
 
-    public function testCanGenerateTree() : void {
+    public function testCanGenerateTree(): void
+    {
         $tree = <<<TREE
         parent/
         ├── child dir
@@ -112,14 +122,16 @@ class DirectoryTest extends TestCase {
         $this->assertSame($tree, $parent->tree(), 'Incorrect tree');
     }
 
-    public function testDirectoryFailsWhenAddingUnsupportedChildAsset() : void {
+    public function testDirectoryFailsWhenAddingUnsupportedChildAsset(): void
+    {
         $dir = new Directory('name');
 
         $this->expectExceptionObject(new InvalidArgumentException('Unsupported asset type: TestFs\UnsupportedAsset'));
         $dir->addChild(new UnsupportedAsset('name'));
     }
 
-    public function testThrowsExceptionWhenAddingChildWithNoSpaceLeftOnDevice() : void {
+    public function testThrowsExceptionWhenAddingChildWithNoSpaceLeftOnDevice(): void
+    {
         $device = new Device('name');
         $device->setDeviceSize(1);
 
@@ -127,7 +139,8 @@ class DirectoryTest extends TestCase {
         $device->addChild(new File('name', 'this is my content'));
     }
 
-    public function testAvailableDeviceSizeIncreasesWhenChildIsRemoved() : void {
+    public function testAvailableDeviceSizeIncreasesWhenChildIsRemoved(): void
+    {
         $device = new Device('name');
         $device->setDeviceSize(1000);
 
@@ -142,16 +155,20 @@ class DirectoryTest extends TestCase {
     }
 }
 
-class UnsupportedAsset extends Asset {
-    public function getType() : int {
+class UnsupportedAsset extends Asset
+{
+    public function getType(): int
+    {
         return 0;
     }
 
-    public function getSize() : int {
+    public function getSize(): int
+    {
         return 0;
     }
 
-    public function getDefaultMode() : int {
+    public function getDefaultMode(): int
+    {
         return 0777;
     }
 }

@@ -6,9 +6,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(FopenMode::class)]
-class FopenModeTest extends TestCase {
+class FopenModeTest extends TestCase
+{
     #[DataProvider('getModeData')]
-    public function testCorrectlyCreatesInstance(string $mode, bool $extended, ?string $extra, bool $expectedRead, bool $expectedWrite, int $expectedOffset, bool $expectedTruncate, bool $expectedCreate, bool $expectedBinary, bool $expectedText) : void {
+    public function testCorrectlyCreatesInstance(string $mode, bool $extended, ?string $extra, bool $expectedRead, bool $expectedWrite, int $expectedOffset, bool $expectedTruncate, bool $expectedCreate, bool $expectedBinary, bool $expectedText): void
+    {
         $mode = new FopenMode($mode, $extended, $extra);
 
         $this->assertSame($expectedRead, $mode->read(), 'Incorrect read value');
@@ -23,7 +25,8 @@ class FopenModeTest extends TestCase {
     /**
      * @return array<string,array{mode:string,extended:bool,extra:?string,expectedRead:bool,expectedWrite:bool,expectedOffset:int,expectedTruncate:bool,expectedCreate:bool,expectedBinary:bool,expectedText:bool}>
      */
-    public static function getModeData() : array {
+    public static function getModeData(): array
+    {
         return [
             'read' => [
                 'mode'             => 'r',
@@ -35,7 +38,7 @@ class FopenModeTest extends TestCase {
                 'expectedTruncate' => false,
                 'expectedCreate'   => false,
                 'expectedBinary'   => false,
-                'expectedText'     => false
+                'expectedText'     => false,
             ],
             'write' => [
                 'mode'             => 'w',
@@ -47,7 +50,7 @@ class FopenModeTest extends TestCase {
                 'expectedTruncate' => true,
                 'expectedCreate'   => true,
                 'expectedBinary'   => false,
-                'expectedText'     => false
+                'expectedText'     => false,
             ],
         ];
     }

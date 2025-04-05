@@ -1,10 +1,11 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
-use TestFs\Exception\NoSpaceLeftOnDeviceException;
 use TestFs\Exception\InvalidArgumentException;
+use TestFs\Exception\NoSpaceLeftOnDeviceException;
 
-class Directory extends Asset {
+class Directory extends Asset
+{
     /**
      * Child assets in a numerically indexed array
      *
@@ -17,7 +18,8 @@ class Directory extends Asset {
      *
      * @return int
      */
-    public function getType() : int {
+    public function getType(): int
+    {
         return 0040000;
     }
 
@@ -26,7 +28,8 @@ class Directory extends Asset {
      *
      * @return int
      */
-    protected function getDefaultMode() : int {
+    protected function getDefaultMode(): int
+    {
         return 0777;
     }
 
@@ -35,7 +38,8 @@ class Directory extends Asset {
      *
      * @return array<int,File|Directory> Returns a numerically indexed array with all child assets of the directory
      */
-    public function getChildren() : array {
+    public function getChildren(): array
+    {
         return $this->children;
     }
 
@@ -44,7 +48,8 @@ class Directory extends Asset {
      *
      * @return bool True if the directory is empty, false otherwise
      */
-    public function isEmpty() : bool {
+    public function isEmpty(): bool
+    {
         return 0 === count($this->children);
     }
 
@@ -54,7 +59,8 @@ class Directory extends Asset {
      * @param string $name The name of the child
      * @return bool True if a child with the given name exists, false otherwise
      */
-    public function hasChild(string $name) : bool {
+    public function hasChild(string $name): bool
+    {
         return null !== $this->getChild($name);
     }
 
@@ -64,7 +70,8 @@ class Directory extends Asset {
      * @param string $name The name of the file
      * @return bool True if a child file with the given name exists, false otherwise
      */
-    public function hasFile(string $name) : bool {
+    public function hasFile(string $name): bool
+    {
         return $this->getChild($name) instanceof File;
     }
 
@@ -74,7 +81,8 @@ class Directory extends Asset {
      * @param string $name The name of the directory
      * @return bool True if a child directory with the given name exists, false otherwise
      */
-    public function hasDirectory(string $name) : bool {
+    public function hasDirectory(string $name): bool
+    {
         return $this->getChild($name) instanceof Directory;
     }
 
@@ -84,8 +92,9 @@ class Directory extends Asset {
      * @param string $name The name of the child to get
      * @return File|Directory|null Returns the asset if it exists
      */
-    public function getChild(string $name) {
-        $children = array_filter($this->children, function(Asset $a) use ($name) : bool {
+    public function getChild(string $name)
+    {
+        $children = array_filter($this->children, function (Asset $a) use ($name): bool {
             return $a->getName() === $name;
         });
 
@@ -98,7 +107,8 @@ class Directory extends Asset {
      * @param string $name The name of the child file to get
      * @return ?File
      */
-    public function getChildFile(string $name) : ?File {
+    public function getChildFile(string $name): ?File
+    {
         $file = $this->getChild($name);
 
         return $file instanceof File ? $file : null;
@@ -110,7 +120,8 @@ class Directory extends Asset {
      * @param string $name The name of the child directory to get
      * @return ?Directory
      */
-    public function getChildDirectory(string $name) : ?Directory {
+    public function getChildDirectory(string $name): ?Directory
+    {
         $dir = $this->getChild($name);
 
         return $dir instanceof Directory ? $dir : null;
@@ -124,7 +135,8 @@ class Directory extends Asset {
      * @throws NoSpaceLeftOnDeviceException Thrown if there is not enough space on the device to add the asset
      * @return void
      */
-    public function addChild(Asset $asset) : void {
+    public function addChild(Asset $asset): void
+    {
         if (!$asset instanceof File && !$asset instanceof Directory) {
             throw new InvalidArgumentException(sprintf('Unsupported asset type: %s', get_class($asset)));
         }
@@ -166,12 +178,13 @@ class Directory extends Asset {
      * @throws InvalidArgumentException Throws an exception if the child does not exist
      * @return void
      */
-    public function removeChild(string $name) : void {
+    public function removeChild(string $name): void
+    {
         if (!$this->hasChild($name)) {
             throw new InvalidArgumentException(sprintf('Child "%s" does not exist', $name));
         }
 
-        $this->children = array_values(array_filter($this->children, function(Asset $child) use ($name) : bool {
+        $this->children = array_values(array_filter($this->children, function (Asset $child) use ($name): bool {
             return $child->getName() !== $name;
         }));
     }
@@ -181,7 +194,8 @@ class Directory extends Asset {
      *
      * @return int Size in bytes
      */
-    public function getSize() : int {
+    public function getSize(): int
+    {
         $size = 0;
 
         foreach ($this->children as $childAsset) {
@@ -197,20 +211,21 @@ class Directory extends Asset {
      * @param array<int,bool> $prefix Prefix data for the tree
      * @return string
      */
-    public function tree(array $prefix = [], int &$numFiles = 0, int &$numDirectories = 1) : string {
+    public function tree(array $prefix = [], int &$numFiles = 0, int &$numDirectories = 1): string
+    {
         $first = empty($prefix);
         $name = str_replace(StreamWrapper::getDeviceName(), '', $this->getName());
         $output = [sprintf('%s%s', $name, $first ? '/' : '')];
         $children = $this->children;
 
-        usort($children, function(Asset $a, Asset $b) : int {
+        usort($children, function (Asset $a, Asset $b): int {
             return strcmp($a->getName(), $b->getName());
         });
 
         $numChildren = count($children);
         $prefixIndex = count($prefix);
         $i = 0;
-        $p = implode('', array_map(function(bool $hasMore) : string {
+        $p = implode('', array_map(function (bool $hasMore): string {
             return $hasMore ? '│   ' : '    ';
         }, $prefix));
 
@@ -236,7 +251,7 @@ class Directory extends Asset {
                 $numDirectories,
                 1 === $numDirectories ? 'y' : 'ies',
                 $numFiles,
-                1 === $numFiles ? '' : 's'
+                1 === $numFiles ? '' : 's',
             );
         }
 

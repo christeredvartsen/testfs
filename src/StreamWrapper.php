@@ -1,11 +1,12 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
+use ArrayIterator;
 use TestFs\Exception\InvalidArgumentException;
 use TestFs\Exception\RuntimeException;
-use ArrayIterator;
 
-class StreamWrapper {
+class StreamWrapper
+{
     /**
      * Resource updated by PHP
      *
@@ -108,7 +109,8 @@ class StreamWrapper {
      * @throws InvalidArgumentException
      * @return void
      */
-    public static function addUser(int $uid, string $name) : void {
+    public static function addUser(int $uid, string $name): void
+    {
         if (isset(self::$users[$uid])) {
             throw new InvalidArgumentException(sprintf('User with uid %d already exists', $uid));
         }
@@ -125,7 +127,8 @@ class StreamWrapper {
      * @throws InvalidArgumentException
      * @return void
      */
-    public static function addGroup(int $gid, string $name, array $members = []) : void {
+    public static function addGroup(int $gid, string $name, array $members = []): void
+    {
         if (isset(self::$groups[$gid])) {
             throw new InvalidArgumentException(sprintf('Group with gid %d already exists', $gid));
         }
@@ -141,7 +144,8 @@ class StreamWrapper {
      *
      * @return int
      */
-    public static function getUid() : int {
+    public static function getUid(): int
+    {
         return self::$uid;
     }
 
@@ -152,7 +156,8 @@ class StreamWrapper {
      * @throws InvalidArgumentException Throws an exception if $uid does not exist
      * @return void
      */
-    public static function setUid(int $uid) : void {
+    public static function setUid(int $uid): void
+    {
         if (!isset(self::$users[$uid])) {
             throw new InvalidArgumentException(sprintf('UID %d does not exist', $uid));
         }
@@ -165,7 +170,8 @@ class StreamWrapper {
      *
      * @return int
      */
-    public static function getGid() : int {
+    public static function getGid(): int
+    {
         return self::$gid;
     }
 
@@ -175,7 +181,8 @@ class StreamWrapper {
      * @param int $gid
      * @return void
      */
-    public static function setGid(int $gid) : void {
+    public static function setGid(int $gid): void
+    {
         if (!isset(self::$groups[$gid])) {
             throw new InvalidArgumentException(sprintf('GID %d does not exist', $gid));
         }
@@ -188,7 +195,8 @@ class StreamWrapper {
      *
      * @return string
      */
-    public static function getDeviceName() : string {
+    public static function getDeviceName(): string
+    {
         return self::$deviceName;
     }
 
@@ -203,12 +211,13 @@ class StreamWrapper {
      * @throws RuntimeException Throws an exception if an existing stream wrapper exists, and we are not forcing the addition
      * @return bool True on success, false otherwise
      */
-    public static function register(bool $force = false, int $uid = 0, int $gid = 0) : bool {
+    public static function register(bool $force = false, int $uid = 0, int $gid = 0): bool
+    {
         $exists = in_array(self::$protocol, stream_get_wrappers());
 
         if ($exists && !$force) {
             throw new RuntimeException(sprintf('Protocol "%s" is already registered', self::$protocol));
-        } else if ($exists) {
+        } elseif ($exists) {
             self::unregister();
         }
 
@@ -229,7 +238,8 @@ class StreamWrapper {
      *
      * @return bool True on success, false otherwise
      */
-    public static function unregister() : bool {
+    public static function unregister(): bool
+    {
         self::$device = null;
         self::$uid    = 0;
         self::$gid    = 0;
@@ -244,7 +254,8 @@ class StreamWrapper {
      *
      * @return ?Device
      */
-    public static function getDevice() : ?Device {
+    public static function getDevice(): ?Device
+    {
         return self::$device;
     }
 
@@ -254,7 +265,8 @@ class StreamWrapper {
      * @param string $path The path to get the URL to
      * @return string Returns the path with the protocol prefixed
      */
-    public static function url(string $path) : string {
+    public static function url(string $path): string
+    {
         return sprintf('%s://%s', self::$protocol, ltrim($path, '/'));
     }
 
@@ -265,7 +277,8 @@ class StreamWrapper {
      * @throws InvalidArgumentException Throws an exception if the URL is not valid
      * @return string
      */
-    public static function urlToPath(string $url) : string {
+    public static function urlToPath(string $url): string
+    {
         /** @var string[] */
         $parts = parse_url($url);
 
@@ -276,7 +289,7 @@ class StreamWrapper {
         $path = sprintf(
             '%s/%s',
             $parts['host'] ?? '',
-            $parts['path'] ?? ''
+            $parts['path'] ?? '',
         );
 
         /** @var string */
@@ -295,7 +308,8 @@ class StreamWrapper {
      *
      * @return bool True on success, false otherwise
      */
-    public function dir_closedir() : bool {
+    public function dir_closedir(): bool
+    {
         $this->directoryIterator = null;
 
         return true;
@@ -310,16 +324,17 @@ class StreamWrapper {
      * @param int $options Options for opening the directory. This parameter is ignored.
      * @return bool True on success, false otherwise
      */
-    public function dir_opendir(string $path , int $options) : bool {
+    public function dir_opendir(string $path, int $options): bool
+    {
         $asset = $this->getAssetFromUrl($path);
 
         if (null === $asset) {
             $this->warn(sprintf('opendir(%s): failed to open dir: No such file or directory', $path));
             return false;
-        } else if (!($asset instanceof Directory)) {
+        } elseif (!($asset instanceof Directory)) {
             $this->warn(sprintf('opendir(%s): failed to open dir: Not a directory', $path));
             return false;
-        } else if (!$asset->isReadable(self::$uid, self::$gid)) {
+        } elseif (!$asset->isReadable(self::$uid, self::$gid)) {
             $this->warn(sprintf('Warning: opendir(%s): failed to open dir: Permission denied', $path));
             return false;
         }
@@ -337,7 +352,8 @@ class StreamWrapper {
      * @throws RuntimeException
      * @return bool|string The next filename or false if there is no more files
      */
-    public function dir_readdir() {
+    public function dir_readdir()
+    {
         if (!$this->directoryIterator instanceof ArrayIterator) {
             throw new RuntimeException('Invalid directory iterator');
         }
@@ -361,7 +377,8 @@ class StreamWrapper {
      * @throws RuntimeException
      * @return bool Returns true on success, false otherwise
      */
-    public function dir_rewinddir() : bool {
+    public function dir_rewinddir(): bool
+    {
         if (!$this->directoryIterator instanceof ArrayIterator) {
             throw new RuntimeException('Invalid directory iterator');
         }
@@ -380,7 +397,8 @@ class StreamWrapper {
      * @param int $options Options for directory creation
      * @return bool Returns true on success or false on failure
      */
-    public function mkdir(string $path, int $mode, int $options) : bool {
+    public function mkdir(string $path, int $mode, int $options): bool
+    {
         $path = $this->urlToPath($path);
 
         /** @var Device */
@@ -397,10 +415,10 @@ class StreamWrapper {
             if ($lastPart && null !== $child) {
                 $this->warn('mkdir(): File exists');
                 return false;
-            } else if (!$lastPart && !$recursive && null === $child) {
+            } elseif (!$lastPart && !$recursive && null === $child) {
                 $this->warn('mkdir(): No such file or directory');
                 return false;
-            } else if (null === $child) {
+            } elseif (null === $child) {
                 if (!$current->isWritable(self::$uid, self::$gid)) {
                     $this->warn('mkdir(): Permission denied');
                     return false;
@@ -431,7 +449,8 @@ class StreamWrapper {
      * @param string $to The new name
      * @return bool True on failure, false otherwise
      */
-    public function rename(string $from, string $to) : bool {
+    public function rename(string $from, string $to): bool
+    {
         $origin = $this->getAssetFromUrl($from);
         $target = $this->getAssetFromUrl($to);
         $targetParent = $this->getAssetParent($this->urlToPath($to));
@@ -439,10 +458,10 @@ class StreamWrapper {
         if (null === $origin || null === $targetParent) {
             $this->warn(sprintf('rename(%s,%s): No such file or directory', $from, $to));
             return false;
-        } else if ($target instanceof Directory) {
+        } elseif ($target instanceof Directory) {
             $this->warn(sprintf('rename(%s,%s): Is a directory', $from, $to));
             return false;
-        } else if (($origin instanceof Directory) && ($target instanceof File)) {
+        } elseif (($origin instanceof Directory) && ($target instanceof File)) {
             $this->warn(sprintf('rename(%s,%s): Not a directory', $from, $to));
             return false;
         }
@@ -467,20 +486,21 @@ class StreamWrapper {
      * @param int $options Options for removing
      * @return bool
      */
-    public function rmdir(string $path, int $options) : bool {
+    public function rmdir(string $path, int $options): bool
+    {
         $path = $this->urlToPath($path);
         $asset = $this->getAsset($path);
 
         if (null === $asset) {
             $this->warn(sprintf('rmdir(%s): No such file or directory', $path));
             return false;
-        } else if (!($asset instanceof Directory)) {
+        } elseif (!($asset instanceof Directory)) {
             $this->warn(sprintf('rmdir(%s): Not a directory', $path));
             return false;
-        } else if (!$asset->isEmpty()) {
+        } elseif (!$asset->isEmpty()) {
             $this->warn(sprintf('rmdir(%s): Not empty', $path));
             return false;
-        } else if (!$asset->isWritable(self::$uid, self::$gid)) {
+        } elseif (!$asset->isWritable(self::$uid, self::$gid)) {
             $this->warn(sprintf('rmdir(%s): Permission denied', $path));
             return false;
         }
@@ -501,7 +521,8 @@ class StreamWrapper {
      * @param int $castAs
      * @return false
      */
-    public function stream_cast(int $castAs) : bool {
+    public function stream_cast(int $castAs): bool
+    {
         return false;
     }
 
@@ -515,7 +536,8 @@ class StreamWrapper {
      * @throws RuntimeException
      * @return void
      */
-    public function stream_close() : void {
+    public function stream_close(): void
+    {
         if (!$this->fileHandle instanceof File) {
             throw new RuntimeException('Invalid file handle');
         }
@@ -534,7 +556,8 @@ class StreamWrapper {
      * @throws RuntimeException
      * @return bool
      */
-    public function stream_eof() : bool {
+    public function stream_eof(): bool
+    {
         if (!$this->fileHandle instanceof File) {
             throw new RuntimeException('Invalid file handle');
         }
@@ -550,7 +573,8 @@ class StreamWrapper {
      *
      * @return false
      */
-    public function stream_flush() : bool {
+    public function stream_flush(): bool
+    {
         return false;
     }
 
@@ -563,7 +587,8 @@ class StreamWrapper {
      * @throws RuntimeException
      * @return bool
      */
-    public function stream_lock(int $operation) : bool {
+    public function stream_lock(int $operation): bool
+    {
         if (!$this->fileHandle instanceof File) {
             throw new RuntimeException('Invalid file handle');
         }
@@ -585,7 +610,8 @@ class StreamWrapper {
      * @param mixed $value The value to use
      * @return bool Returns false on failure, true otherwise
      */
-    public function stream_metadata(string $path, int $option, $value) : bool {
+    public function stream_metadata(string $path, int $option, $value): bool
+    {
         $path = $this->urlToPath($path);
         $asset = $this->getAsset($path);
 
@@ -597,7 +623,7 @@ class StreamWrapper {
                     if ($parent === null) {
                         $this->warn(sprintf(
                             'touch(): Unable to create file %s because No such file or directory',
-                            $path
+                            $path,
                         ));
                         return false;
                     }
@@ -656,7 +682,7 @@ class StreamWrapper {
             case STREAM_META_GROUP_NAME: // chgrp() with group name
             case STREAM_META_GROUP:      // chgrp() with group number
                 if (is_string($value)) {
-                    $gid = array_flip(array_map(function(array $group) : string {
+                    $gid = array_flip(array_map(function (array $group): string {
                         return $group['name'];
                     }, self::$groups))[$value] ?? null;
 
@@ -718,7 +744,8 @@ class StreamWrapper {
      * @param string $opened_path Path that was actually opened. Updated if $options include STREAM_USE_PATH
      * @return bool True on success, false otherwise
      */
-    public function stream_open(string $path, string $mode, int $options, ?string &$opened_path) : bool {
+    public function stream_open(string $path, string $mode, int $options, ?string &$opened_path): bool
+    {
         $path = $this->urlToPath($path);
         $asset = $this->getAsset($path);
         $parent = $this->getAssetParent($path);
@@ -759,10 +786,10 @@ class StreamWrapper {
             $this->warn(sprintf('fopen(%s): failed to open stream: Permission denied', $path));
 
             return false;
-        } else if (null === $asset) {
+        } elseif (null === $asset) {
             $asset = $this->getAssetFactory()->file(basename($path));
             $parent->addChild($asset);
-        } else if ($mode->read() && !$asset->isReadable(self::$uid, self::$gid)) {
+        } elseif ($mode->read() && !$asset->isReadable(self::$uid, self::$gid)) {
             $this->warn(sprintf('fopen(%s): failed to open stream: Permission denied', $path));
 
             return false;
@@ -793,7 +820,8 @@ class StreamWrapper {
      * @throws RuntimeException
      * @return string
      */
-    public function stream_read(int $count) : string {
+    public function stream_read(int $count): string
+    {
         if (!$this->fileHandle instanceof File) {
             throw new RuntimeException('Invalid file handle');
         }
@@ -811,7 +839,8 @@ class StreamWrapper {
      * @throws RuntimeException
      * @return bool Returns true on success, false on failure
      */
-    public function stream_seek(int $offset, int $whence = SEEK_SET) : bool {
+    public function stream_seek(int $offset, int $whence = SEEK_SET): bool
+    {
         if (!$this->fileHandle instanceof File) {
             throw new RuntimeException('Invalid file handle');
         }
@@ -830,7 +859,8 @@ class StreamWrapper {
      * @param int $arg2 Optional second argument for the option
      * @return bool True on an implemented option, false otherwise
      */
-    public function stream_set_option(int $option, int $arg1, ?int $arg2) : bool {
+    public function stream_set_option(int $option, int $arg1, ?int $arg2): bool
+    {
         return false;
     }
 
@@ -842,7 +872,8 @@ class StreamWrapper {
      * @throws RuntimeException
      * @return array<array-key,mixed>
      */
-    public function stream_stat() : array {
+    public function stream_stat(): array
+    {
         if (!$this->fileHandle instanceof File) {
             throw new RuntimeException('Invalid file handle');
         }
@@ -857,7 +888,8 @@ class StreamWrapper {
      *
      * @return int
      */
-    public function stream_tell() : int {
+    public function stream_tell(): int
+    {
         if (!$this->fileHandle instanceof File) {
             throw new RuntimeException('Invalid file handle');
         }
@@ -873,7 +905,8 @@ class StreamWrapper {
      * @param int $size The new size for the file
      * @return bool
      */
-    public function stream_truncate(int $size) : bool {
+    public function stream_truncate(int $size): bool
+    {
         if (!$this->fileHandle instanceof File) {
             throw new RuntimeException('Invalid file handle');
         }
@@ -889,7 +922,8 @@ class StreamWrapper {
      * @param string $data The data to write
      * @return int Returns the number of bytes written
      */
-    public function stream_write(string $data) : int {
+    public function stream_write(string $data): int
+    {
         if (!$this->fileHandle instanceof File) {
             throw new RuntimeException('Invalid file handle');
         }
@@ -905,7 +939,8 @@ class StreamWrapper {
      * @param string $path The path to remove
      * @return bool Returns true on success, false otherwise
      */
-    public function unlink(string $path) : bool {
+    public function unlink(string $path): bool
+    {
         $path = $this->urlToPath($path);
         $asset = $this->getAsset($path);
 
@@ -916,11 +951,11 @@ class StreamWrapper {
             $this->warn(sprintf('unlink(%s): No such file or directory', $path));
 
             return false;
-        } else if ($asset instanceof Directory) {
+        } elseif ($asset instanceof Directory) {
             $this->warn(sprintf('unlink(%s): Is a directory', $path));
 
             return false;
-        } else if (!$parent->isWritable(self::$uid, self::$gid)) {
+        } elseif (!$parent->isWritable(self::$uid, self::$gid)) {
             $this->warn(sprintf('unlink(%s): Permission denied', $path));
 
             return false;
@@ -940,7 +975,8 @@ class StreamWrapper {
      * @param int $flags Options
      * @return bool|array<array-key,mixed> Returns false on failure, or an array with stat data otherwise
      */
-    public function url_stat(string $path, int $flags) {
+    public function url_stat(string $path, int $flags)
+    {
         $asset = $this->getAssetFromUrl($path);
 
         if (null === $asset) {
@@ -949,7 +985,7 @@ class StreamWrapper {
             }
 
             return false;
-        } else if (!$asset->isReadable(self::$uid, self::$gid)) {
+        } elseif (!$asset->isReadable(self::$uid, self::$gid)) {
             $this->warn(sprintf('stat(): stat failed for %s', $path));
 
             return false;
@@ -964,7 +1000,8 @@ class StreamWrapper {
      * @codeCoverageIgnore
      * @return AssetFactory
      */
-    private function getAssetFactory() : AssetFactory {
+    private function getAssetFactory(): AssetFactory
+    {
         if (null === self::$assetFactory) {
             self::$assetFactory = new AssetFactory();
         }
@@ -978,7 +1015,8 @@ class StreamWrapper {
      * @param string $path The path to get
      * @return File|Directory|null Returns null if the asset does not exist
      */
-    private function getAsset(string $path) {
+    private function getAsset(string $path)
+    {
         $parts = array_filter(explode('/', $path));
         $current = self::$device;
 
@@ -1007,7 +1045,8 @@ class StreamWrapper {
      * @param string $path The path to get the parent of
      * @return Directory|Device|null Returns null if the asset does not exist
      */
-    private function getAssetParent(string $path) {
+    private function getAssetParent(string $path)
+    {
         $parentPath = implode('/', array_slice(explode('/', $path), 0, -1));
 
         if ($parentPath) {
@@ -1026,7 +1065,8 @@ class StreamWrapper {
      * @param string $message The warning message
      * @return void
      */
-    private function warn(string $message) : void {
+    private function warn(string $message): void
+    {
         trigger_error($message, E_USER_WARNING);
     }
 
@@ -1037,7 +1077,8 @@ class StreamWrapper {
      * @throws InvalidArgumentException Throws an exception if the mode is invalid
      * @return FopenMode
      */
-    private function parseFopenMode(string $mode) : FopenMode {
+    private function parseFopenMode(string $mode): FopenMode
+    {
         if (0 === preg_match('/^(?P<mode>r|w|a|x|c)(?P<extra>b|t)?(?P<extended>\+)?$/', $mode, $match)) {
             throw new InvalidArgumentException(sprintf('Unsupported mode: "%s"', $mode));
         }
@@ -1045,7 +1086,7 @@ class StreamWrapper {
         return new FopenMode(
             $match['mode'],
             !empty($match['extended']),
-            $match['extra'] ?? null
+            $match['extra'] ?? null,
         );
     }
 
@@ -1055,7 +1096,8 @@ class StreamWrapper {
      * @param string $url TestFs URL
      * @return ?Asset Returns the asset if it exists, or null otherwise
      */
-    private function getAssetFromUrl(string $url) : ?Asset {
+    private function getAssetFromUrl(string $url): ?Asset
+    {
         return $this->getAsset($this->urlToPath($url));
     }
 
@@ -1065,7 +1107,8 @@ class StreamWrapper {
      * @param Asset $asset The asset to stat
      * @return array<array-key,mixed>
      */
-    private function assetStat(Asset $asset) : array {
+    private function assetStat(Asset $asset): array
+    {
         $stat = [
             'dev'     => 0,
             'ino'     => 0,
@@ -1090,7 +1133,8 @@ class StreamWrapper {
      *
      * @return string Returns a unique ID per instance
      */
-    private function getLockId() : string {
+    private function getLockId(): string
+    {
         return spl_object_hash($this);
     }
 
@@ -1101,7 +1145,8 @@ class StreamWrapper {
      * @param int $gid The GID to check
      * @return bool
      */
-    private function userIsInGroup(int $uid, int $gid) : bool {
+    private function userIsInGroup(int $uid, int $gid): bool
+    {
         if (empty(self::$groups[$gid]['members'])) {
             return false;
         }

@@ -1,7 +1,8 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
-class File extends Asset {
+class File extends Asset
+{
     /**
      * Contents of the file
      */
@@ -50,7 +51,8 @@ class File extends Asset {
      * @param string $name The name of the file
      * @param string $content The content of the file
      */
-    public function __construct(string $name, string $content = '') {
+    public function __construct(string $name, string $content = '')
+    {
         parent::__construct($name);
 
         $this->content = $content;
@@ -62,7 +64,8 @@ class File extends Asset {
      *
      * @return int
      */
-    public function getType() : int {
+    public function getType(): int
+    {
         return 0100000;
     }
 
@@ -72,7 +75,8 @@ class File extends Asset {
      * @param bool $read Read flag
      * @return void
      */
-    public function setRead(bool $read) : void {
+    public function setRead(bool $read): void
+    {
         $this->read = $read;
     }
 
@@ -82,7 +86,8 @@ class File extends Asset {
      * @param bool $write Write flag
      * @return void
      */
-    public function setWrite(bool $write) : void {
+    public function setWrite(bool $write): void
+    {
         $this->write = $write;
     }
 
@@ -91,7 +96,8 @@ class File extends Asset {
      *
      * @return int
      */
-    protected function getDefaultMode() : int {
+    protected function getDefaultMode(): int
+    {
         return 0644;
     }
 
@@ -102,7 +108,8 @@ class File extends Asset {
      *
      * @return string
      */
-    public function getContent() : string {
+    public function getContent(): string
+    {
         return $this->content;
     }
 
@@ -111,7 +118,8 @@ class File extends Asset {
      *
      * @return int
      */
-    public function getSize() : int {
+    public function getSize(): int
+    {
         return $this->size;
     }
 
@@ -120,7 +128,8 @@ class File extends Asset {
      *
      * @return int
      */
-    public function getOffset() : int {
+    public function getOffset(): int
+    {
         return $this->offset;
     }
 
@@ -132,7 +141,8 @@ class File extends Asset {
      * @param int $count Number of bytes to read
      * @return string Returns the data read
      */
-    public function read(int $count) : string {
+    public function read(int $count): string
+    {
         if ($this->append || !$this->read) {
             return '';
         }
@@ -149,7 +159,8 @@ class File extends Asset {
      *
      * @return bool
      */
-    public function eof() : bool {
+    public function eof(): bool
+    {
         return !$this->append && ($this->offset >= $this->size);
     }
 
@@ -161,7 +172,8 @@ class File extends Asset {
      * @param string $data The data to write
      * @return int Returns numbers of bytes written
      */
-    public function write(string $data) : int {
+    public function write(string $data): int
+    {
         if (!$this->write) {
             return 0;
         }
@@ -204,7 +216,8 @@ class File extends Asset {
      * @param int $size The size to truncate to
      * @return bool
      */
-    public function truncate(int $size = 0) : bool {
+    public function truncate(int $size = 0): bool
+    {
         if (!$this->write) {
             return false;
         }
@@ -226,7 +239,8 @@ class File extends Asset {
      *
      * @return void
      */
-    public function rewind() : void {
+    public function rewind(): void
+    {
         $this->seek(0, SEEK_SET);
     }
 
@@ -235,7 +249,8 @@ class File extends Asset {
      *
      * @return void
      */
-    public function forward() : void {
+    public function forward(): void
+    {
         $this->seek(0, SEEK_END);
     }
 
@@ -248,15 +263,19 @@ class File extends Asset {
      * @param int $whence From where to set the offset
      * @return bool
      */
-    public function seek(int $offset, int $whence = SEEK_SET) : bool {
+    public function seek(int $offset, int $whence = SEEK_SET): bool
+    {
         if ($this->append) {
             return false;
         }
 
         switch ($whence) {
-            case SEEK_SET: $this->offset = $offset; break;
-            case SEEK_CUR: $this->offset += $offset; break;
-            case SEEK_END: $this->offset = $this->size + $offset; break;
+            case SEEK_SET: $this->offset = $offset;
+                break;
+            case SEEK_CUR: $this->offset += $offset;
+                break;
+            case SEEK_END: $this->offset = $this->size + $offset;
+                break;
         }
 
         if ($this->offset > $this->size) {
@@ -283,7 +302,8 @@ class File extends Asset {
      * @param int $operation Locking operation
      * @return bool
      */
-    public function lock(string $id, int $operation) : bool {
+    public function lock(string $id, int $operation): bool
+    {
         if (!in_array($operation, [LOCK_EX, LOCK_SH, LOCK_UN])) {
             return false;
         }
@@ -298,7 +318,7 @@ class File extends Asset {
             }
 
             $this->lockEx = $id;
-        } else if (LOCK_SH === $operation) {
+        } elseif (LOCK_SH === $operation) {
             if ($this->hasExclusiveLock()) {
                 return false;
             }
@@ -315,7 +335,8 @@ class File extends Asset {
      * @param string $id Specific ID to check for
      * @return bool
      */
-    public function hasExclusiveLock(string $id = null) : bool {
+    public function hasExclusiveLock(string $id = null): bool
+    {
         if (null === $id) {
             return null !== $this->lockEx;
         }
@@ -329,7 +350,8 @@ class File extends Asset {
      * @param string $id The ID to check for
      * @return bool
      */
-    public function hasSharedLock(string $id = null) : bool {
+    public function hasSharedLock(string $id = null): bool
+    {
         if (null === $id) {
             return !empty($this->lockSh);
         }
@@ -343,7 +365,8 @@ class File extends Asset {
      * @param string $id The ID to check for
      * @return bool
      */
-    public function isLocked(string $id = null) : bool {
+    public function isLocked(string $id = null): bool
+    {
         return $this->hasExclusiveLock($id) || $this->hasSharedLock($id);
     }
 
@@ -353,7 +376,8 @@ class File extends Asset {
      * @param string $id The ID to unlock for
      * @return bool
      */
-    public function unlock(string $id) : bool {
+    public function unlock(string $id): bool
+    {
         if ($id === $this->lockEx) {
             $this->lockEx = null;
         }
@@ -369,7 +393,8 @@ class File extends Asset {
      * @param bool $append
      * @return void
      */
-    public function setAppendMode(bool $append) : void {
+    public function setAppendMode(bool $append): void
+    {
         $this->append = $append;
     }
 
@@ -378,7 +403,8 @@ class File extends Asset {
      *
      * @return bool
      */
-    public function getAppendMode() : bool {
+    public function getAppendMode(): bool
+    {
         return $this->append;
     }
 }
