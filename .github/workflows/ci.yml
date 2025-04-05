@@ -2,24 +2,28 @@ name: CI
 on: push
 jobs:
   ci:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: ['8.1', '8.2']
+        php: ["8.3"]
     name: Run CI build
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
 
-      - uses: actions/checkout@v3
-
       - name: PHP version
-        run: |
-          php -v
-          php -i
-          php -m
+        run: php -v
+
+      - name: PHP info
+        run: php -i
+
+      - name: PHP modules
+        run: php -m
 
       - name: Validate composer files
         run: composer validate --strict
@@ -30,12 +34,12 @@ jobs:
 
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-composer-
+            ${{ runner.os }}-php-${{ matrix.php }}-composer-
 
       - name: Install dependencies
         run: composer install
@@ -44,4 +48,4 @@ jobs:
         run: vendor/bin/phpunit
 
       - name: Run static analysis
-        run: vendor/bin/psalm
+        run: vendor/bin/phpstan analyse

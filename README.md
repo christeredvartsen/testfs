@@ -6,7 +6,7 @@ Virtual filesystem for PHP for use with testing, implemented using a stream wrap
 
 ## Requirements
 
-This library requires PHP >= 8.1.
+This library requires PHP >= 8.3.
 
 ## Installation
 

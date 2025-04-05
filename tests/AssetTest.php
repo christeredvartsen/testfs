@@ -1,20 +1,14 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use TestFs\Exception\InvalidArgumentException;
 use TestFs\Exception\RuntimeException;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass TestFs\Asset
- */
+#[CoversClass(Asset::class)]
 class AssetTest extends TestCase {
-    /**
-     * @covers ::__construct
-     * @covers ::getLastAccessed
-     * @covers ::getLastModified
-     * @covers ::getLastMetadataModified
-     */
     public function testConstructor() : void {
         $asset = new File('name');
         $this->assertTrue(0 < $atime = $asset->getLastAccessed(), 'Last accessed time not set');
@@ -23,30 +17,18 @@ class AssetTest extends TestCase {
         $this->assertTrue(($atime === $mtime) && ($mtime === $ctime), 'Timestamps should be the same');
     }
 
-    /**
-     * @covers ::setUid
-     * @covers ::getUid
-     */
     public function testCanSetAndGetUid() : void {
         $asset = new Directory('name');
         $asset->setUid(123);
         $this->assertSame(123, $asset->getUid(), 'Incorrect UID');
     }
 
-    /**
-     * @covers ::setGid
-     * @covers ::getGid
-     */
     public function testCanSetAndGetGid() : void {
         $asset = new Directory('name');
         $asset->setGid(123);
         $this->assertSame(123, $asset->getGid(), 'Incorrect GID');
     }
 
-    /**
-     * @covers ::setParent
-     * @covers ::getParent
-     */
     public function testCanSetAndGetParent() : void {
         $asset = new File('name');
         $this->assertNull($asset->getParent(), 'Expected parent to be null');
@@ -55,28 +37,17 @@ class AssetTest extends TestCase {
         $this->assertSame($parent, $asset->getParent(), 'Incorrect parent instance');
     }
 
-    /**
-     * @covers ::setMode
-     * @covers ::getMode
-     */
     public function testCanSetAndGetMode() : void {
         $asset = new File('name');
         $asset->setMode(0600);
         $this->assertSame(0600, $asset->getMode(), 'Incorrect mode');
     }
 
-    /**
-     * @covers ::getType
-     */
     public function testCanGetAssetType() : void {
         $this->assertSame(0100000, (new File('name'))->getType(), 'Incorrect default mode');
         $this->assertSame(0040000, (new Directory('name'))->getType(), 'Incorrect default mode');
     }
 
-    /**
-     * @covers ::setName
-     * @covers ::getName
-     */
     public function testCanSetAndGetName() : void {
         $asset = new File('name');
         $this->assertSame('name', $asset->getName(), 'Incorrect name');
@@ -84,18 +55,12 @@ class AssetTest extends TestCase {
         $this->assertSame('newname', $asset->getName(), 'Incorrect name');
     }
 
-    /**
-     * @dataProvider getInvalidAssetNames
-     * @covers ::setName
-     */
+    #[DataProvider('getInvalidAssetNames')]
     public function testThrowsExceptionOnInvalidName(string $name, string $exceptionMessage) : void {
         $this->expectExceptionObject(new InvalidArgumentException($exceptionMessage));
         new File($name);
     }
 
-    /**
-     * @covers ::setParent
-     */
     public function testThrowsExceptionWhenNameAlreadyExistsWhenSettingParent() : void {
         $parent = new Directory('parent');
         $parent->addChild(new File('name'));
@@ -104,9 +69,6 @@ class AssetTest extends TestCase {
         (new File('name'))->setParent($parent);
     }
 
-    /**
-     * @covers ::setName
-     */
     public function testThrowsExceptionWhenNameAlreadyExistsWhenChangingName() : void {
         $asset = new File('name');
         $parent = new Directory('parent');
@@ -117,9 +79,6 @@ class AssetTest extends TestCase {
         $asset->setName('othername');
     }
 
-    /**
-     * @covers ::updateLastAccessed
-     */
     public function testCanUpdateLastAccessed() : void {
         $time = time();
         $asset = new File('name');
@@ -127,18 +86,12 @@ class AssetTest extends TestCase {
         $this->assertSame($time, $asset->getLastAccessed(), 'Last accessed timestamp does not match');
     }
 
-    /**
-     * @covers ::updateLastAccessed
-     */
     public function testCanUpdateLastAccessedToCurrentTimestamp() : void {
         $asset = new File('name');
         $asset->updateLastAccessed();
         $this->assertTrue(0 < $asset->getLastAccessed(), 'Expected last accessed timestamp to have a value');
     }
 
-    /**
-     * @covers ::updateLastModified
-     */
     public function testCanUpdateLastModified() : void {
         $time = time();
         $asset = new File('name');
@@ -146,18 +99,12 @@ class AssetTest extends TestCase {
         $this->assertSame($time, $asset->getLastModified(), 'Last modified timestamp does not match');
     }
 
-    /**
-     * @covers ::updateLastModified
-     */
     public function testCanUpdateLastModifiedToCurrentTimestamp() : void {
         $asset = new File('name');
         $asset->updateLastModified();
         $this->assertTrue(0 < $asset->getLastModified(), 'Expected last modified timestamp to have a value');
     }
 
-    /**
-     * @covers ::updateLastMetadataModified
-     */
     public function testCanUpdateLastMetadataModified() : void {
         $time = time();
         $asset = new File('name');
@@ -165,18 +112,12 @@ class AssetTest extends TestCase {
         $this->assertSame($time, $asset->getLastMetadataModified(), 'Last metadata modified timestamp does not match');
     }
 
-    /**
-     * @covers ::updateLastMetadataModified
-     */
     public function testCanUpdateLastMetadataModifiedToCurrentTimestamp() : void {
         $asset = new File('name');
         $asset->updateLastMetadataModified();
         $this->assertTrue(0 < $asset->getLastMetadataModified(), 'Expected last metadata modified timestamp to have a value');
     }
 
-    /**
-     * @covers ::delete
-     */
     public function testCanDeleteFromParent() : void {
         $directory = $this->createMock(Directory::class);
         $directory
@@ -188,17 +129,11 @@ class AssetTest extends TestCase {
         $file->delete();
     }
 
-    /**
-     * @covers ::delete
-     */
     public function testThrowsExceptionWhenDeletingWithNoParent() : void {
         $this->expectExceptionObject(new RuntimeException('The asset does not have a parent'));
         (new File('name'))->delete();
     }
 
-    /**
-     * @covers ::detach
-     */
     public function testCanDetachFromParent() : void {
         $dir = $this->createMock(Directory::class);
         $dir
@@ -216,9 +151,6 @@ class AssetTest extends TestCase {
         $file->detach();
     }
 
-    /**
-     * @covers ::setParent
-     */
     public function testSettingParentRemovesAssetFromExistingParent() : void {
         $dir1 = new Directory('dir1');
         $dir2 = new Directory('dir2');
@@ -231,9 +163,6 @@ class AssetTest extends TestCase {
         $this->assertTrue($dir2->hasChild('file'), 'Expected directory to have file');
     }
 
-    /**
-     * @covers ::setParent
-     */
     public function testSetExistingParentReturnsEarly() : void {
         $directory = $this->createMock(Directory::class);
         $directory
@@ -245,10 +174,7 @@ class AssetTest extends TestCase {
         $file->setParent($directory);
     }
 
-    /**
-     * @dataProvider getAccessCheckDataForReadable
-     * @covers ::isReadable
-     */
+    #[DataProvider('getAccessCheckDataForReadable')]
     public function testCanCheckIfAssetIsReadable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
         $file = new File('filename');
         $file->setUid($ownerUid);
@@ -258,9 +184,6 @@ class AssetTest extends TestCase {
         $this->assertSame($expectedResult, $file->isReadable($checkUid, $checkGid), 'Wrong result for isReadable');
     }
 
-    /**
-     * @covers ::isReadable
-     */
     public function testAssetIsNotReadableWhenParentIsNotReadable() : void {
         $dir = new Directory('dir');
         $dir->setUid(1);
@@ -277,10 +200,7 @@ class AssetTest extends TestCase {
         $this->assertFalse($file->isReadable(2, 2), 'Did not expect user to be able to read');
     }
 
-    /**
-     * @dataProvider getAccessCheckDataForWritable
-     * @covers ::isWritable
-     */
+    #[DataProvider('getAccessCheckDataForWritable')]
     public function testCanCheckIfAssetIsWritable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
         $file = new File('filename');
         $file->setUid($ownerUid);
@@ -290,10 +210,7 @@ class AssetTest extends TestCase {
         $this->assertSame($expectedResult, $file->isWritable($checkUid, $checkGid), 'Wrong result for isWritable');
     }
 
-    /**
-     * @dataProvider getAccessCheckDataForExecutable
-     * @covers ::isExecutable
-     */
+    #[DataProvider('getAccessCheckDataForExecutable')]
     public function testCanCheckIfAssetIsExecutable(int $ownerUid, int $ownerGid, int $mode, int $checkUid, int $checkGid, bool $expectedResult) : void {
         $file = new File('filename');
         $file->setUid($ownerUid);
@@ -303,9 +220,6 @@ class AssetTest extends TestCase {
         $this->assertSame($expectedResult, $file->isExecutable($checkUid, $checkGid), 'Wrong result for isExecutable');
     }
 
-    /**
-     * @covers ::isOwnedByUser
-     */
     public function testCanCheckIfAssetIsOwnedByUser() : void {
         $asset = new File('filename');
         $this->assertTrue($asset->isOwnedByUser(0), 'Expected UID 0 to own the asset');
@@ -314,10 +228,6 @@ class AssetTest extends TestCase {
         $this->assertTrue($asset->isOwnedByUser(1), 'Expected UID 1 to own the asset');
     }
 
-    /**
-     * @covers ::getDevice
-     * @covers TestFs\Device::getDevice
-     */
     public function testCanGetDevice() : void {
         $file   = new File('name');
         $dir    = new Directory('name');
@@ -330,9 +240,6 @@ class AssetTest extends TestCase {
         $this->assertSame($device, $device->getDevice(), 'Incorrect instance returned');
     }
 
-    /**
-     * @covers ::getDevice
-     */
     public function testReturnNullIfThereIsNoDevice() : void {
         $file = new File('name');
         $dir  = new Directory('name');

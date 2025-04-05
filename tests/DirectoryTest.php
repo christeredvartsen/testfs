@@ -1,40 +1,23 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use TestFs\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use TestFs\Exception\NoSpaceLeftOnDeviceException;
 
-/**
- * @coversDefaultClass TestFs\Directory
- */
+#[CoversClass(Directory::class)]
 class DirectoryTest extends TestCase {
-    /**
-     * @covers ::getType
-     */
     public function testCanGetFileType() : void {
         $this->assertSame(0040000, (new Directory('name'))->getType(), 'Incorrect directory type');
     }
 
-    /**
-     * @covers ::isEmpty
-     * @covers ::getChildren
-     */
     public function testIsEmpty() : void {
         $dir = new Directory('name');
         $this->assertSame([], $dir->getChildren(), 'Did not expect any children');
         $this->assertTrue($dir->isEmpty(), 'Expected directory to be empty');
     }
 
-    /**
-     * @covers ::addChild
-     * @covers ::getChild
-     * @covers ::getChildDirectory
-     * @covers ::getChildFile
-     * @covers ::hasDirectory
-     * @covers ::hasFile
-     * @covers ::hasChild
-     */
     public function testCanAddAndGetChildren() : void {
         $dir = new Directory('name');
 
@@ -58,9 +41,6 @@ class DirectoryTest extends TestCase {
         $this->assertFalse($dir->hasChild('foobar'), 'Did not expect directory to have child');
     }
 
-    /**
-     * @covers ::addChild
-     */
     public function testThrowsExceptionWhenAddingChildWithANameThatAlreadyExists() : void {
         $dir = new Directory('name');
 
@@ -73,9 +53,6 @@ class DirectoryTest extends TestCase {
         $dir->addChild($childFile);
     }
 
-    /**
-     * @covers ::removeChild
-     */
     public function testCanRemoveChild() : void {
         $dir = new Directory('name');
 
@@ -88,9 +65,6 @@ class DirectoryTest extends TestCase {
         $this->assertFalse($dir->hasChild('name'), 'Did not expect directory to have child');
     }
 
-    /**
-     * @covers ::removeChild
-     */
     public function testThrowsExceptionWhenDeletingAChildThatDoesNotExist() : void {
         $dir = new Directory('name');
 
@@ -98,9 +72,6 @@ class DirectoryTest extends TestCase {
         $dir->removeChild('name');
     }
 
-    /**
-     * @covers ::getSize
-     */
     public function testCanGetSize() : void {
         $dir = new Directory('parent');
         $childDir = new Directory('child');
@@ -116,25 +87,19 @@ class DirectoryTest extends TestCase {
         $this->assertSame(46, $dir->getSize(), 'Incorrect file size');
     }
 
-    /**
-     * @covers ::getDefaultMode
-     */
     public function testGetDefaultMode() : void {
         $this->assertSame(0777, (new Directory('name'))->getMode(), 'Incorrect mode');
     }
 
-    /**
-     * @covers ::tree
-     */
     public function testCanGenerateTree() : void {
         $tree = <<<TREE
-parent/
-├── child dir
-│   └── child file of child dir
-└── child file
+        parent/
+        ├── child dir
+        │   └── child file of child dir
+        └── child file
 
-2 directories, 2 files
-TREE;
+        2 directories, 2 files
+        TREE;
 
         $parent = new Directory('parent');
         $childDir = new Directory('child dir');
@@ -147,9 +112,6 @@ TREE;
         $this->assertSame($tree, $parent->tree(), 'Incorrect tree');
     }
 
-    /**
-     * @covers ::addChild
-     */
     public function testDirectoryFailsWhenAddingUnsupportedChildAsset() : void {
         $dir = new Directory('name');
 
@@ -157,9 +119,6 @@ TREE;
         $dir->addChild(new UnsupportedAsset('name'));
     }
 
-    /**
-     * @covers ::addChild
-     */
     public function testThrowsExceptionWhenAddingChildWithNoSpaceLeftOnDevice() : void {
         $device = new Device('name');
         $device->setDeviceSize(1);
@@ -168,9 +127,6 @@ TREE;
         $device->addChild(new File('name', 'this is my content'));
     }
 
-    /**
-     * @covers ::removeChild
-     */
     public function testAvailableDeviceSizeIncreasesWhenChildIsRemoved() : void {
         $device = new Device('name');
         $device->setDeviceSize(1000);

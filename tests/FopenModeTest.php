@@ -1,23 +1,13 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass TestFs\FopenMode
- */
+#[CoversClass(FopenMode::class)]
 class FopenModeTest extends TestCase {
-    /**
-     * @covers ::__construct
-     * @covers ::read
-     * @covers ::write
-     * @covers ::create
-     * @covers ::truncate
-     * @covers ::offset
-     * @covers ::binary
-     * @covers ::text
-     * @dataProvider getModeData
-     */
+    #[DataProvider('getModeData')]
     public function testCorrectlyCreatesInstance(string $mode, bool $extended, ?string $extra, bool $expectedRead, bool $expectedWrite, int $expectedOffset, bool $expectedTruncate, bool $expectedCreate, bool $expectedBinary, bool $expectedText) : void {
         $mode = new FopenMode($mode, $extended, $extra);
 

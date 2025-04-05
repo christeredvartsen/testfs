@@ -1,43 +1,30 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass TestFs\File
- */
+#[CoversClass(File::class)]
 class FileTest extends TestCase {
     use ErrorHandler;
 
-    /**
-     * @covers ::getType
-     */
     public function testCanGetFileType() : void {
         $this->assertSame(0100000, (new File('name'))->getType(), 'Incorrect file type');
     }
 
-    /**
-     * @dataProvider getFileContent
-     * @covers ::getSize
-     */
+    #[DataProvider('getFileContent')]
     public function testCanCalculateSize(string $content, int $expectedSize) : void {
         $this->assertSame($expectedSize, (new File('name', $content))->getSize(), 'Incorrect size');
     }
 
-    /**
-     * @dataProvider getContentForReading
-     * @covers ::read
-     * @covers ::getOffset
-     */
+    #[DataProvider('getContentForReading')]
     public function testCanRead(string $content, int $bytes, string $expectedOutput, int $expectedOffset) : void {
         $file = new File('name', $content);
         $this->assertSame($expectedOutput, $file->read($bytes), 'Incorrect output');
         $this->assertSame($expectedOffset, $file->getOffset(), 'Incorrect offset after reading');
     }
 
-    /**
-     * @covers ::eof
-     */
     public function testCanCheckForEof() : void {
         $file = new File('name', 'contents');
         $this->assertFalse($file->eof(), 'Did not expect EOF');
@@ -45,12 +32,7 @@ class FileTest extends TestCase {
         $this->assertTrue($file->eof(), 'Expected EOF');
     }
 
-    /**
-     * @dataProvider getContentForWriting
-     * @covers ::write
-     * @covers ::getContent
-     * @covers ::__construct
-     */
+    #[DataProvider('getContentForWriting')]
     public function testCanWriteData(string $existingContent, int $newDataLength, string $newData, string $newContent) : void {
         $file = new File('name', $existingContent);
 
@@ -59,10 +41,7 @@ class FileTest extends TestCase {
         $this->assertSame($newContent, $file->getContent(), 'Incorrect content after writing');
     }
 
-    /**
-     * @dataProvider getDataForTruncate
-     * @covers ::truncate
-     */
+    #[DataProvider('getDataForTruncate')]
     public function testCanTruncateFile(string $existingContent, int $size, string $expectedContent) : void {
         $file = new File('name', $existingContent);
         $file->truncate($size);
@@ -70,10 +49,7 @@ class FileTest extends TestCase {
         $this->assertSame(0, $file->getOffset(), 'Offset is not supposed to be changed');
     }
 
-    /**
-     * @dataProvider getDataForSeek
-     * @covers ::seek
-     */
+    #[DataProvider('getDataForSeek')]
     public function testCanSeekInFile(string $content, int $seek, int $whence, int $expectedOffset, string $expectedContent) : void {
         $file = new File('name', $content);
         $file->seek($seek, $whence);
@@ -81,11 +57,6 @@ class FileTest extends TestCase {
         $this->assertSame($expectedContent, $file->getContent(), 'Incorrect content after seek');
     }
 
-    /**
-     * @covers ::seek
-     * @covers ::forward
-     * @covers ::rewind
-     */
     public function testCanRewindAndForward() : void {
         $file = new File('name', 'some content');
         $file->forward();
@@ -94,29 +65,16 @@ class FileTest extends TestCase {
         $this->assertSame(0, $file->getOffset(), 'Incorrect offset after rewinding');
     }
 
-    /**
-     * @covers ::getDefaultMode
-     */
     public function testGetDefaultMode() : void {
         $this->assertSame(0644, (new File('name'))->getMode(), 'Incorrect default mode');
     }
 
-    /**
-     * @covers ::isLocked
-     * @covers ::hasSharedLock
-     */
     public function testFileIsInitiallyUnlocked() : void {
         $file = new File('name');
         $this->assertFalse($file->isLocked(), 'Did not expect file to be locked');
         $this->assertFalse($file->hasSharedLock(), 'Did not expect file to have a shared lock');
     }
 
-    /**
-     * @covers ::lock
-     * @covers ::isLocked
-     * @covers ::hasSharedLock
-     * @covers ::hasExclusiveLock
-     */
     public function testCanHaveSharedLockOnSpecificId() : void {
         $file = new File('name');
         $this->assertTrue($file->lock('id', LOCK_SH), 'Expected lock to succeed');
@@ -127,12 +85,6 @@ class FileTest extends TestCase {
         $this->assertFalse($file->hasSharedLock('other-id'), 'Did not expect other id to have shared lock');
     }
 
-    /**
-     * @covers ::lock
-     * @covers ::unlock
-     * @covers ::hasExclusiveLock
-     * @covers ::hasSharedLock
-     */
     public function testCanAcquireLocksMultipleTimes() : void {
         $id = 'id';
         $file = new File('name');
@@ -145,9 +97,6 @@ class FileTest extends TestCase {
         $this->assertTrue($file->hasSharedLock($id), 'Expected id to have shared lock');
     }
 
-    /**
-     * @covers ::lock
-     */
     public function testWillNotGetExclusiveLockOnLockedFile() : void {
         $file = new File('name');
         $this->assertTrue($file->lock('id', LOCK_EX), 'Expected lock to succeed');
@@ -155,10 +104,6 @@ class FileTest extends TestCase {
         $this->assertFalse($file->lock('other-id', LOCK_SH), 'Expected lock to fail');
     }
 
-    /**
-     * @covers ::lock
-     * @covers ::unlock
-     */
     public function testCanUnlock() : void {
         $file = new File('name');
         $this->assertTrue($file->lock('id', LOCK_EX), 'Expected lock to succeed');
@@ -167,9 +112,6 @@ class FileTest extends TestCase {
         $this->assertFalse($file->hasExclusiveLock('id'), 'Did not expect id to have exclusive lock');
     }
 
-    /**
-     * @covers ::write
-     */
     public function testTruncateDoesNotResetPointer() : void {
         $file = new File('name', 'this is some text');
         $file->seek(5);
@@ -179,12 +121,6 @@ class FileTest extends TestCase {
         $this->assertSame("th\0\0\0new text", $file->getContent());
     }
 
-    /**
-     * @covers ::read
-     * @covers ::seek
-     * @covers ::setAppendMode
-     * @covers ::getAppendMode
-     */
     public function testReadInAppendModeAlwaysReturnsEmptyString() : void {
         $file = new File('name', 'content');
         $this->assertFalse($file->getAppendMode(), 'Expected append mode to be false');
@@ -194,11 +130,6 @@ class FileTest extends TestCase {
         $this->assertSame('', $file->read(7), 'Expected empty string');
     }
 
-    /**
-     * @covers ::setAppendMode
-     * @covers ::write
-     * @covers ::seek
-     */
     public function testWriteInAppendModeAlwaysAppends() : void {
         $file = new File('name', 'content');
         $file->setAppendMode(true);
@@ -207,46 +138,28 @@ class FileTest extends TestCase {
         $this->assertSame('contentsome data', $file->getContent(), 'Incorrect data after write');
     }
 
-    /**
-     * @covers ::lock
-     */
     public function testLockingFailsOnUnsupportedLock() : void {
         $this->assertFalse((new File('name', 'content'))->lock('some-id', LOCK_EX | LOCK_NB), 'Expected locking to fail');
     }
 
-    /**
-     * @covers ::setRead
-     * @covers ::read
-     */
     public function testReadReturnsEmptyStringWhenReadModeIsDisabled() : void {
         $file = new File('name', 'some content');
         $file->setRead(false);
         $this->assertSame('', $file->read(4), 'Expected read to return empty string');
     }
 
-    /**
-     * @covers ::setWrite
-     * @covers ::write
-     */
     public function testWriteReturnsZeroWhenWriteModeIsDisabled() : void {
         $file = new File('name', 'content');
         $file->setWrite(false);
         $this->assertSame(0, $file->write('more content'), 'Expected write to return 0');
     }
 
-    /**
-     * @covers ::setWrite
-     * @covers ::truncate
-     */
     public function testTruncateFailsWhenWriteModeIsDisabled() : void {
         $file = new File('name', 'content');
         $file->setWrite(false);
         $this->assertFalse($file->truncate(2), 'Expected truncate to return false');
     }
 
-    /**
-     * @covers ::write
-     */
     public function testTruncateDataWhenThereIsNotEnoughSpaceOnDevice() : void {
         $file   = new File('name');
         $device = new Device('some name');
