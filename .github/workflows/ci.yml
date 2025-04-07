@@ -5,7 +5,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: ["8.3"]
+        php: ["8.3", "8.4"]
+
     name: Run CI build
     steps:
       - name: Checkout repository
@@ -51,4 +52,4 @@ jobs:
         run: vendor/bin/phpstan analyse
 
       - name: Check coding standard
-        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+        run: PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix --dry-run --diff

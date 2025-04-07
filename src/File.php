@@ -300,7 +300,7 @@ class File extends Asset
     /**
      * Check for a file lock
      */
-    public function isLocked(string $id = null): bool
+    public function isLocked(?string $id = null): bool
     {
         return $this->hasExclusiveLock($id) || $this->hasSharedLock($id);
     }
