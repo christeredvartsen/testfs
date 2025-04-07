@@ -12,7 +12,7 @@ class FileTest extends TestCase
 
     public function testCanGetFileType(): void
     {
-        $this->assertSame(0100000, (new File('name'))->getType(), 'Incorrect file type');
+        $this->assertSame(Asset::TYPE_FILE, (new File('name'))->getType(), 'Incorrect file type');
     }
 
     #[DataProvider('getFileContent')]
@@ -44,7 +44,7 @@ class FileTest extends TestCase
 
         $this->assertSame($newDataLength, $file->write($newData), 'Incorrect length');
         $this->assertSame($newDataLength, $file->getOffset(), 'Incorrect offset after writing');
-        $this->assertSame($newContent, $file->getContent(), 'Incorrect content after writing');
+        $this->assertSame($newContent, $file->getContents(), 'Incorrect content after writing');
     }
 
     #[DataProvider('getDataForTruncate')]
@@ -52,7 +52,7 @@ class FileTest extends TestCase
     {
         $file = new File('name', $existingContent);
         $file->truncate($size);
-        $this->assertSame($expectedContent, $file->getContent(), 'Incorrect content');
+        $this->assertSame($expectedContent, $file->getContents(), 'Incorrect content');
         $this->assertSame(0, $file->getOffset(), 'Offset is not supposed to be changed');
     }
 
@@ -62,7 +62,7 @@ class FileTest extends TestCase
         $file = new File('name', $content);
         $file->seek($seek, $whence);
         $this->assertSame($expectedOffset, $file->getOffset(), 'Incorrect offset after seek');
-        $this->assertSame($expectedContent, $file->getContent(), 'Incorrect content after seek');
+        $this->assertSame($expectedContent, $file->getContents(), 'Incorrect content after seek');
     }
 
     public function testCanRewindAndForward(): void
@@ -134,7 +134,7 @@ class FileTest extends TestCase
         $file->truncate(2);
         $file->write('new text');
 
-        $this->assertSame("th\0\0\0new text", $file->getContent());
+        $this->assertSame("th\0\0\0new text", $file->getContents());
     }
 
     public function testReadInAppendModeAlwaysReturnsEmptyString(): void
@@ -153,7 +153,7 @@ class FileTest extends TestCase
         $file->setAppendMode(true);
         $this->assertFalse($file->seek(0), 'Did not expect seek to work');
         $file->write('some data');
-        $this->assertSame('contentsome data', $file->getContent(), 'Incorrect data after write');
+        $this->assertSame('contentsome data', $file->getContents(), 'Incorrect data after write');
     }
 
     public function testLockingFailsOnUnsupportedLock(): void
@@ -185,12 +185,11 @@ class FileTest extends TestCase
     public function testTruncateDataWhenThereIsNotEnoughSpaceOnDevice(): void
     {
         $file   = new File('name');
-        $device = new Device('some name');
-        $device->setDeviceSize(7);
-        $device->addChild($file);
+        $device = new Device(7);
+        $device->getRoot()->addChild($file);
 
         $this->ignoreError(fn () => $file->write('some data'));
-        $this->assertSame('some da', $file->getContent());
+        $this->assertSame('some da', $file->getContents());
 
         $this->expectExceptionObject(new Notice('fwrite(): write failed, no space left on device'));
         $file->write('some data');

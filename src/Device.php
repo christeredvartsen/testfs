@@ -1,64 +1,78 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
-use TestFs\Exception\InvalidArgumentException;
+use TestFs\Exception\InsufficientStorageException;
 
-class Device extends Directory
+class Device
 {
     public const UNLIMITED_SIZE = -1;
 
-    /**
-     * Available storage space
-     */
-    private int $deviceSize = self::UNLIMITED_SIZE;
+    private RootDirectory $root;
+
+    public function __construct(private int $size = self::UNLIMITED_SIZE)
+    {
+        $this->root = new RootDirectory($this);
+    }
 
     /**
      * Set the device size in bytes
      *
-     * @param int $size Size in bytes
-     * @throws InvalidArgumentException
-     * @return void
+     * @throws InsufficientStorageException
      */
-    public function setDeviceSize(int $size): void
+    public function setSize(int $size): void
     {
-        if ($size < $this->getSize()) {
-            throw new InvalidArgumentException('Size of the files in the virtual filesystem already exceeds the given size');
+        if ($size !== self::UNLIMITED_SIZE && $size < $this->root->getSize()) {
+            throw new InsufficientStorageException($size, $this->root->getSize());
         }
 
-        $this->deviceSize = max(self::UNLIMITED_SIZE, $size);
+        $this->size = $size;
     }
 
     /**
      * Get the device size
-     *
-     * @return int
      */
-    public function getDeviceSize(): int
+    public function getSize(): int
     {
-        return $this->deviceSize;
+        return $this->size;
     }
 
     /**
      * Get the available size left on the device
-     *
-     * @return int
      */
     public function getAvailableSize(): int
     {
-        if (self::UNLIMITED_SIZE === $this->deviceSize) {
+        if (self::UNLIMITED_SIZE === $this->size) {
             return self::UNLIMITED_SIZE;
         }
 
-        return $this->deviceSize - $this->getSize();
+        return $this->size - $this->root->getSize();
     }
 
     /**
-     * Return self when getting the root directory
-     *
-     * @return Device
+     * Whether or not the device has enough space to fit a number of bytes
      */
-    public function getDevice(): Device
+    public function canFitBytes(int $bytes): bool
     {
-        return $this;
+        if (self::UNLIMITED_SIZE === $this->size) {
+            return true;
+        }
+
+        return $bytes <= $this->getAvailableSize();
+    }
+
+    /**
+     * Whether or not the device has enough space to fit an asset
+     */
+    public function canFitAsset(Asset $asset): bool
+    {
+        return $this->canFitBytes($asset->getSize());
+    }
+
+    /**
+     * Get the root directory
+     */
+    public function getRoot(): RootDirectory
+    {
+        return $this->root;
     }
 }

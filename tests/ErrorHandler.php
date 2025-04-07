@@ -10,7 +10,7 @@ trait ErrorHandler
     public static function setUpBeforeClass(): void
     {
         set_error_handler(
-            function (int $errno, string $errstr): void {
+            function (int $errno, string $errstr, string $errfile, int $errline): bool {
                 if (0 !== error_reporting()) {
                     switch ($errno) {
                         case E_USER_NOTICE: throw new Notice($errstr);
@@ -18,6 +18,7 @@ trait ErrorHandler
                         default: throw new RuntimeException(sprintf('unknown error: %s (%d)', $errstr, $errno));
                     }
                 }
+                return true;
             },
         );
     }

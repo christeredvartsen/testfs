@@ -12,13 +12,9 @@ class FopenMode
     private bool $text;
 
     /**
-     * Class constructor
-     *
-     * @param string $mode Open mode
-     * @param bool $extended Extended mode
-     * @param ?string $extra Extra options
+     * Create a mode
      */
-    public function __construct(string $mode, bool $extended, ?string $extra)
+    public function __construct(string $mode, bool $extended, ?string $extra = null)
     {
         $this->read     = 'r' === $mode || $extended;
         $this->write    = in_array($mode, ['w', 'a', 'x', 'c']) || $extended;

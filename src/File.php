@@ -1,13 +1,10 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
+use TestFs\Exception\InvalidWhenceException;
+
 class File extends Asset
 {
-    /**
-     * Contents of the file
-     */
-    private string $content = '';
-
     /**
      * File size
      */
@@ -21,14 +18,14 @@ class File extends Asset
     /**
      * Identifier of the resource who owns the exclusive lock
      */
-    private ?string $lockEx = null;
+    private ?string $exclusiveLock = null;
 
     /**
-     * A list of resources who has a shared lock, IDs as key
+     * Resources who has a shared lock, IDs as key
      *
-     * @var array<string,bool>
+     * @var array<string,true>
      */
-    private array $lockSh = [];
+    private array $sharedLocks = [];
 
     /**
      * Whether or not the file was opened with mode 'a'
@@ -45,35 +42,32 @@ class File extends Asset
      */
     private bool $write = true;
 
-    /**
-     * Class constructor
-     *
-     * @param string $name The name of the file
-     * @param string $content The content of the file
-     */
-    public function __construct(string $name, string $content = '')
+    public function getType(): int
     {
-        parent::__construct($name);
+        return self::TYPE_FILE;
+    }
 
-        $this->content = $content;
-        $this->size = strlen($content);
+    public function getSize(): int
+    {
+        return $this->size;
+    }
+
+    protected function getDefaultMode(): int
+    {
+        return 0644;
     }
 
     /**
-     * Get the asset type
-     *
-     * @return int
+     * Create a new file
      */
-    public function getType(): int
+    public function __construct(string $name, private string $contents = '')
     {
-        return 0100000;
+        parent::__construct($name);
+        $this->size = strlen($contents);
     }
 
     /**
      * Set read flag
-     *
-     * @param bool $read Read flag
-     * @return void
      */
     public function setRead(bool $read): void
     {
@@ -82,9 +76,6 @@ class File extends Asset
 
     /**
      * Set write flag
-     *
-     * @param bool $write Write flag
-     * @return void
      */
     public function setWrite(bool $write): void
     {
@@ -92,41 +83,17 @@ class File extends Asset
     }
 
     /**
-     * Get the default mode
-     *
-     * @return int
-     */
-    protected function getDefaultMode(): int
-    {
-        return 0644;
-    }
-
-    /**
-     * Get file content
+     * Get file contents
      *
      * Using this method does not touch the internal offset or access timestamp.
-     *
-     * @return string
      */
-    public function getContent(): string
+    public function getContents(): string
     {
-        return $this->content;
+        return $this->contents;
     }
 
     /**
-     * Get file size
-     *
-     * @return int
-     */
-    public function getSize(): int
-    {
-        return $this->size;
-    }
-
-    /**
-     * Get the offset
-     *
-     * @return int
+     * Get the current offset
      */
     public function getOffset(): int
     {
@@ -137,18 +104,15 @@ class File extends Asset
      * Read an amount of bytes from the current offset, and update the offset
      *
      * This method also updates the access time of the file.
-     *
-     * @param int $count Number of bytes to read
-     * @return string Returns the data read
      */
-    public function read(int $count): string
+    public function read(int $bytes): string
     {
         if ($this->append || !$this->read) {
             return '';
         }
 
-        $this->atime = time();
-        $data = substr($this->content, $this->offset, $count);
+        $this->updateLastAccessed();
+        $data = substr($this->contents, $this->offset, $bytes);
         $this->offset += strlen($data);
 
         return $data;
@@ -156,8 +120,6 @@ class File extends Asset
 
     /**
      * Check if the offset is at the end of file (EOF)
-     *
-     * @return bool
      */
     public function eof(): bool
     {
@@ -165,12 +127,9 @@ class File extends Asset
     }
 
     /**
-     * Write data at the current offset, and update the offset
+     * Write data at the current offset, update the offset and return the number of bytes written
      *
      * This method will also update the file modification time.
-     *
-     * @param string $data The data to write
-     * @return int Returns numbers of bytes written
      */
     public function write(string $data): int
     {
@@ -185,23 +144,23 @@ class File extends Asset
         if ($this->size < $this->offset) {
             // Size of the file can be less than the current offset after a truncate operation, as
             // that operation does not reset the pointer. Pad with null bytes
-            $this->content = str_pad($this->content, $this->offset, "\0", STR_PAD_RIGHT);
+            $this->contents = str_pad($this->contents, $this->offset, "\0", STR_PAD_RIGHT);
             $this->size = $this->offset;
         }
 
         $device = $this->getDevice();
-        $availableSize = $device ? $device->getAvailableSize() : Device::UNLIMITED_SIZE;
         $len = strlen($data);
 
-        if (Device::UNLIMITED_SIZE !== $availableSize && $len > $availableSize) {
+        if (false === $device?->canFitBytes($len)) {
             trigger_error('fwrite(): write failed, no space left on device', E_USER_NOTICE);
 
+            $availableSize = $device->getAvailableSize();
             $data = substr($data, 0, $availableSize);
             $len = $availableSize;
         }
 
-        $this->mtime = time();
-        $this->content = substr_replace($this->content, $data, $this->offset, $len);
+        $this->updateLastModified();
+        $this->contents = substr_replace($this->contents, $data, $this->offset, $len);
         $this->size += $len;
         $this->offset += $len;
 
@@ -212,9 +171,6 @@ class File extends Asset
      * Truncate the file to a given length
      *
      * This method will also update the file modification time. The internal offset is not updated.
-     *
-     * @param int $size The size to truncate to
-     * @return bool
      */
     public function truncate(int $size = 0): bool
     {
@@ -223,12 +179,12 @@ class File extends Asset
         }
 
         if ($size > $this->size) {
-            $this->content = str_pad($this->content, $size, "\0", STR_PAD_RIGHT);
+            $this->contents = str_pad($this->contents, $size, "\0", STR_PAD_RIGHT);
         } else {
-            $this->content = substr($this->content, 0, $size);
+            $this->contents = substr($this->contents, 0, $size);
         }
 
-        $this->mtime = time();
+        $this->updateLastModified();
         $this->size = $size;
 
         return true;
@@ -236,8 +192,6 @@ class File extends Asset
 
     /**
      * Rewind the offset to the start of the file
-     *
-     * @return void
      */
     public function rewind(): void
     {
@@ -246,8 +200,6 @@ class File extends Asset
 
     /**
      * Forward the offset to EOF
-     *
-     * @return void
      */
     public function forward(): void
     {
@@ -259,9 +211,7 @@ class File extends Asset
      *
      * If the offset is beyond EOF, fill the gap with \0. If this is the case, also update the file modification time.
      *
-     * @param int $offset The offset to set
-     * @param int $whence From where to set the offset
-     * @return bool
+     * @throws InvalidWhenceException
      */
     public function seek(int $offset, int $whence = SEEK_SET): bool
     {
@@ -269,19 +219,17 @@ class File extends Asset
             return false;
         }
 
-        switch ($whence) {
-            case SEEK_SET: $this->offset = $offset;
-                break;
-            case SEEK_CUR: $this->offset += $offset;
-                break;
-            case SEEK_END: $this->offset = $this->size + $offset;
-                break;
-        }
+        $this->offset = match($whence) {
+            SEEK_SET => $offset,
+            SEEK_CUR => $this->offset + $offset,
+            SEEK_END => $this->size + $offset,
+            default  => throw new InvalidWhenceException($whence),
+        };
 
         if ($this->offset > $this->size) {
-            $this->content .= str_repeat("\0", $this->offset - $this->size);
+            $this->contents .= str_repeat("\0", $this->offset - $this->size);
             $this->size = $this->offset;
-            $this->mtime = time();
+            $this->updateLastModified();
         }
 
         return true;
@@ -297,10 +245,6 @@ class File extends Asset
      * - LOCK_UN
      *
      * Operations with LOCK_NB are not supported.
-     *
-     * @param string $id ID of the resource who calls this method
-     * @param int $operation Locking operation
-     * @return bool
      */
     public function lock(string $id, int $operation): bool
     {
@@ -317,13 +261,13 @@ class File extends Asset
                 return false;
             }
 
-            $this->lockEx = $id;
+            $this->exclusiveLock = $id;
         } elseif (LOCK_SH === $operation) {
             if ($this->hasExclusiveLock()) {
                 return false;
             }
 
-            $this->lockSh[$id] = true;
+            $this->sharedLocks[$id] = true;
         }
 
         return true;
@@ -331,39 +275,30 @@ class File extends Asset
 
     /**
      * Check for an exclusive lock
-     *
-     * @param string $id Specific ID to check for
-     * @return bool
      */
-    public function hasExclusiveLock(string $id = null): bool
+    public function hasExclusiveLock(?string $id = null): bool
     {
         if (null === $id) {
-            return null !== $this->lockEx;
+            return null !== $this->exclusiveLock;
         }
 
-        return $id === $this->lockEx;
+        return $id === $this->exclusiveLock;
     }
 
     /**
      * Check for a shared lock
-     *
-     * @param string $id The ID to check for
-     * @return bool
      */
-    public function hasSharedLock(string $id = null): bool
+    public function hasSharedLock(?string $id = null): bool
     {
         if (null === $id) {
-            return !empty($this->lockSh);
+            return !empty($this->sharedLocks);
         }
 
-        return !empty($this->lockSh[$id]) && true === $this->lockSh[$id];
+        return array_key_exists($id, $this->sharedLocks);
     }
 
     /**
      * Check for a file lock
-     *
-     * @param string $id The ID to check for
-     * @return bool
      */
     public function isLocked(string $id = null): bool
     {
@@ -372,26 +307,18 @@ class File extends Asset
 
     /**
      * Unlock the file
-     *
-     * @param string $id The ID to unlock for
-     * @return bool
      */
-    public function unlock(string $id): bool
+    public function unlock(string $id): void
     {
-        if ($id === $this->lockEx) {
-            $this->lockEx = null;
+        if ($id === $this->exclusiveLock) {
+            $this->exclusiveLock = null;
         }
 
-        unset($this->lockSh[$id]);
-
-        return true;
+        unset($this->sharedLocks[$id]);
     }
 
     /**
      * Set append mode
-     *
-     * @param bool $append
-     * @return void
      */
     public function setAppendMode(bool $append): void
     {
@@ -400,8 +327,6 @@ class File extends Asset
 
     /**
      * Get the append mode
-     *
-     * @return bool
      */
     public function getAppendMode(): bool
     {

@@ -1,24 +1,56 @@
 <?php declare(strict_types=1);
 namespace TestFs;
 
-use TestFs\Exception\InvalidArgumentException;
-use TestFs\Exception\RuntimeException;
+use TestFs\Exception\DuplicateAssetException;
+use TestFs\Exception\InvalidAssetNameException;
 
 abstract class Asset
 {
+    public const TYPE_FILE      = 0100000;
+    public const TYPE_DIRECTORY = 0040000;
+
+    /**
+     * Name of the asset
+     */
     private string $name;
+
+    /**
+     * Parent directory of the asset
+     */
     private ?Directory $parent = null;
+
+    /**
+     * Last accessed time
+     */
     protected int $atime;
+
+    /**
+     * Last modified time
+     */
     protected int $mtime;
+
+    /**
+     * Last metadata changed time
+     */
     protected int $ctime;
+
+    /**
+     * User ID of the asset
+     */
     private int $uid;
+
+    /**
+     * Group ID of the asset
+     */
     private int $gid;
+
+    /**
+     * Mode of the asset
+     */
     protected int $mode;
 
     /**
-     * Class constructor
-     *
-     * @param string $name The name of the asset
+     * Create a new asset
      */
     public function __construct(string $name)
     {
@@ -36,45 +68,22 @@ abstract class Asset
     /**
      * Get the asset type
      *
-     * @return int
+     * Should be one of the TYPE_ constants defined in this class.
      */
     abstract public function getType(): int;
 
     /**
-     * Get the size of the asset, including child assets
-     *
-     * @return int
+     * Get the size of the asset in bytes, including child assets
      */
     abstract public function getSize(): int;
 
     /**
      * Get the default mode of the asset
-     *
-     * @return int
      */
     abstract protected function getDefaultMode(): int;
 
     /**
-     * Remove the asset
-     *
-     * @throws RuntimeException Throws an exception if the file does not have a parent
-     * @return void
-     */
-    public function delete(): void
-    {
-        $parent = $this->getParent();
-
-        if (null === $parent) {
-            throw new RuntimeException('The asset does not have a parent');
-        }
-
-        $parent->removeChild($this->getName());
-    }
-
-    /**
-     * Get last acceessed timestamp
-     *
-     * @return int
+     * Get last accessed timestamp
      */
     public function getLastAccessed(): int
     {
@@ -84,21 +93,15 @@ abstract class Asset
     /**
      * Set the last accessed timestamp
      *
-     * @param int $atime The timestamp to set
+     * If a value of 0 or below is specified, the current time will be used.
      */
     public function updateLastAccessed(int $atime = 0): void
     {
-        if (!$atime) {
-            $atime = time();
-        }
-
-        $this->atime = $atime;
+        $this->atime = 0 < $atime ? $atime : time();
     }
 
     /**
      * Get last modified timestamp
-     *
-     * @return int
      */
     public function getLastModified(): int
     {
@@ -108,21 +111,15 @@ abstract class Asset
     /**
      * Set the last modification timestamp
      *
-     * @param int $mtime The timestamp to set
+     * If a value of 0 or below is specified, the current time will be used.
      */
     public function updateLastModified(int $mtime = 0): void
     {
-        if (!$mtime) {
-            $mtime = time();
-        }
-
-        $this->mtime = $mtime;
+        $this->mtime = 0 < $mtime ? $mtime : time();
     }
 
     /**
      * Get last inode change timestamp
-     *
-     * @return int
      */
     public function getLastMetadataModified(): int
     {
@@ -132,22 +129,15 @@ abstract class Asset
     /**
      * Set the last inode change timestamp
      *
-     * @param int $ctime The timestamp to set
+     * If a value of 0 or below is specified, the current time will be used.
      */
     public function updateLastMetadataModified(int $ctime = 0): void
     {
-        if (!$ctime) {
-            $ctime = time();
-        }
-
-        $this->ctime = $ctime;
+        $this->ctime = 0 < $ctime ? $ctime : time();
     }
 
     /**
      * Set the UID of the asset
-     *
-     * @param int $uid The UID to set
-     * @return void
      */
     public function setUid(int $uid): void
     {
@@ -157,9 +147,6 @@ abstract class Asset
 
     /**
      * Set the GID of the asset
-     *
-     * @param int $gid The GID to set
-     * @return void
      */
     public function setGid(int $gid): void
     {
@@ -169,8 +156,6 @@ abstract class Asset
 
     /**
      * Get the UID
-     *
-     * @return int
      */
     public function getUid(): int
     {
@@ -179,8 +164,6 @@ abstract class Asset
 
     /**
      * Get the GID
-     *
-     * @return int
      */
     public function getGid(): int
     {
@@ -190,20 +173,23 @@ abstract class Asset
     /**
      * Set the name of the asset
      *
-     * @param string $name The name to set
-     * @throws InvalidArgumentException
-     * @return void
+     * @throws InvalidAssetNameException
+     * @throws DuplicateAssetException
      */
     public function setName(string $name): void
     {
         $name = trim($name);
 
         if (empty($name)) {
-            throw new InvalidArgumentException('Name can not be empty');
-        } elseif (false !== strpos($name, DIRECTORY_SEPARATOR)) {
-            throw new InvalidArgumentException('Name can not contain a directory separator');
-        } elseif ($this->parent instanceof Directory && $this->parent->hasChild($name)) {
-            throw new InvalidArgumentException('There exists an asset with the same name in this directory');
+            throw new InvalidAssetNameException('Name can not be empty');
+        }
+
+        if (false !== strpos($name, DIRECTORY_SEPARATOR)) {
+            throw new InvalidAssetNameException('Name can not contain a directory separator');
+        }
+
+        if (true === $this->parent?->hasChild($name)) {
+            throw new DuplicateAssetException($this->parent, $name);
         }
 
         $this->name = $name;
@@ -211,8 +197,6 @@ abstract class Asset
 
     /**
      * Get the asset name
-     *
-     * @return string
      */
     public function getName(): string
     {
@@ -222,7 +206,7 @@ abstract class Asset
     /**
      * Detach from parent
      *
-     * @return void
+     * Detaching a child without a parent is a no-op.
      */
     public function detach(): void
     {
@@ -237,38 +221,31 @@ abstract class Asset
     /**
      * Set the parent directory
      *
-     * @param Directory $parent The parent directory
-     * @param bool $addAsChild Whether or not to add the asset as a child to the parent
-     * @throws InvalidArgumentException
-     * @return void
+     * Setting a new parent will detach the asset from the old parent.
+     *
+     * Setting the existing parent is a no-op.
+     *
+     * @throws DuplicateAssetException
      */
-    public function setParent(Directory $parent, bool $addAsChild = true): void
+    protected function setParent(Directory $parent): void
     {
         if ($parent === $this->getParent()) {
             return;
         }
 
-        $name = $this->getName();
-
-        if ($parent->hasChild($name)) {
-            throw new InvalidArgumentException(sprintf('Target directory already has a child named "%s"', $name));
+        if ($parent->hasChild($this->getName())) {
+            throw new DuplicateAssetException($parent, $this);
         }
 
         if ($this->parent) {
-            $this->parent->removeChild($this->getName());
+            $this->detach();
         }
 
         $this->parent = $parent;
-
-        if ($addAsChild) {
-            $this->parent->addChild($this);
-        }
     }
 
     /**
      * Get the parent directory
-     *
-     * @return ?Directory
      */
     public function getParent(): ?Directory
     {
@@ -276,20 +253,15 @@ abstract class Asset
     }
 
     /**
-     * Get the file system device
-     *
-     * @return ?Device
+     * Get the device that the asset is attached to
      */
     public function getDevice(): ?Device
     {
-        return null === $this->parent ? null : $this->parent->getDevice();
+        return $this->parent?->getDevice();
     }
 
     /**
      * Set the mode
-     *
-     * @param int $mode The mode to set
-     * @return void
      */
     public function setMode(int $mode): void
     {
@@ -298,8 +270,6 @@ abstract class Asset
 
     /**
      * Get the mode
-     *
-     * @return int
      */
     public function getMode(): int
     {
@@ -308,10 +278,6 @@ abstract class Asset
 
     /**
      * Check if the asset is readable
-     *
-     * @param int $uid The UID to check
-     * @param int $gid The GID to check
-     * @return bool
      */
     public function isReadable(int $uid, int $gid): bool
     {
@@ -338,10 +304,6 @@ abstract class Asset
 
     /**
      * Check if the asset is writable
-     *
-     * @param int $uid The UID to check
-     * @param int $gid The GID to check
-     * @return bool
      */
     public function isWritable(int $uid, int $gid): bool
     {
@@ -362,10 +324,6 @@ abstract class Asset
 
     /**
      * Check if the asset is executable
-     *
-     * @param int $uid The UID to check
-     * @param int $gid The GID to check
-     * @return bool
      */
     public function isExecutable(int $uid, int $gid): bool
     {
@@ -382,9 +340,6 @@ abstract class Asset
 
     /**
      * Check if the asset is owned by a specific user
-     *
-     * @param int $uid The UID to check
-     * @return bool
      */
     public function isOwnedByUser(int $uid): bool
     {

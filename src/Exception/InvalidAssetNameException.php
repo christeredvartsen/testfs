@@ -3,6 +3,6 @@ namespace TestFs\Exception;
 
 use InvalidArgumentException as SplInvalidArgumentException;
 
-class InvalidArgumentException extends SplInvalidArgumentException
+class InvalidAssetNameException extends SplInvalidArgumentException
 {
 }

@@ -4,8 +4,8 @@ namespace TestFs;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use TestFs\Exception\InvalidArgumentException;
-use TestFs\Exception\RuntimeException;
+use TestFs\Exception\DuplicateAssetException;
+use TestFs\Exception\InvalidAssetNameException;
 
 #[CoversClass(Asset::class)]
 class AssetTest extends TestCase
@@ -33,12 +33,12 @@ class AssetTest extends TestCase
         $this->assertSame(123, $asset->getGid(), 'Incorrect GID');
     }
 
-    public function testCanSetAndGetParent(): void
+    public function testCanGetParent(): void
     {
         $asset = new File('name');
         $this->assertNull($asset->getParent(), 'Expected parent to be null');
         $parent = new Directory('name');
-        $asset->setParent($parent);
+        $parent->addChild($asset);
         $this->assertSame($parent, $asset->getParent(), 'Incorrect parent instance');
     }
 
@@ -51,8 +51,8 @@ class AssetTest extends TestCase
 
     public function testCanGetAssetType(): void
     {
-        $this->assertSame(0100000, (new File('name'))->getType(), 'Incorrect default mode');
-        $this->assertSame(0040000, (new Directory('name'))->getType(), 'Incorrect default mode');
+        $this->assertSame(Asset::TYPE_FILE, (new File('name'))->getType(), 'Incorrect default mode');
+        $this->assertSame(Asset::TYPE_DIRECTORY, (new Directory('name'))->getType(), 'Incorrect default mode');
     }
 
     public function testCanSetAndGetName(): void
@@ -66,27 +66,19 @@ class AssetTest extends TestCase
     #[DataProvider('getInvalidAssetNames')]
     public function testThrowsExceptionOnInvalidName(string $name, string $exceptionMessage): void
     {
-        $this->expectExceptionObject(new InvalidArgumentException($exceptionMessage));
+        $this->expectExceptionObject(new InvalidAssetNameException($exceptionMessage));
         new File($name);
-    }
-
-    public function testThrowsExceptionWhenNameAlreadyExistsWhenSettingParent(): void
-    {
-        $parent = new Directory('parent');
-        $parent->addChild(new File('name'));
-
-        $this->expectExceptionObject(new InvalidArgumentException('Target directory already has a child named "name"'));
-        (new File('name'))->setParent($parent);
     }
 
     public function testThrowsExceptionWhenNameAlreadyExistsWhenChangingName(): void
     {
         $asset = new File('name');
         $parent = new Directory('parent');
+        $parent->addChild($asset);
         $parent->addChild(new File('othername'));
-        $asset->setParent($parent);
 
-        $this->expectExceptionObject(new InvalidArgumentException('There exists an asset with the same name in this directory'));
+        $this->expectException(DuplicateAssetException::class);
+        $this->expectExceptionMessage('Directory "parent" already has a child named "othername"');
         $asset->setName('othername');
     }
 
@@ -135,65 +127,19 @@ class AssetTest extends TestCase
         $this->assertTrue(0 < $asset->getLastMetadataModified(), 'Expected last metadata modified timestamp to have a value');
     }
 
-    public function testCanDeleteFromParent(): void
-    {
-        $directory = $this->createMock(Directory::class);
-        $directory
-            ->expects($this->once())
-            ->method('removeChild')
-            ->with('name');
-        $file = new File('name');
-        $file->setParent($directory);
-        $file->delete();
-    }
-
-    public function testThrowsExceptionWhenDeletingWithNoParent(): void
-    {
-        $this->expectExceptionObject(new RuntimeException('The asset does not have a parent'));
-        (new File('name'))->delete();
-    }
-
     public function testCanDetachFromParent(): void
     {
-        $dir = $this->createMock(Directory::class);
-        $dir
-            ->expects($this->once())
-            ->method('removeChild');
-
         $file = new File('name');
-        $file->setParent($dir);
+        $dir = new Directory('parent');
+        $dir->addChild($file);
 
         $file->detach();
 
         $this->assertNull($file->getParent(), 'Did not expect parent to exist');
+        $this->assertFalse($dir->hasChild('name'), 'Did not expect parent to have child');
 
         // Call again to make sure an error does not occur when detaching an already detached asset
         $file->detach();
-    }
-
-    public function testSettingParentRemovesAssetFromExistingParent(): void
-    {
-        $dir1 = new Directory('dir1');
-        $dir2 = new Directory('dir2');
-        $file = new File('file');
-
-        $file->setParent($dir1);
-        $this->assertTrue($dir1->hasChild('file'), 'Expected directory to have file');
-        $file->setParent($dir2);
-        $this->assertFalse($dir1->hasChild('file'), 'Did not expect directory to have child');
-        $this->assertTrue($dir2->hasChild('file'), 'Expected directory to have file');
-    }
-
-    public function testSetExistingParentReturnsEarly(): void
-    {
-        $directory = $this->createMock(Directory::class);
-        $directory
-            ->expects($this->once())
-            ->method('hasChild');
-
-        $file = new File('name');
-        $file->setParent($directory);
-        $file->setParent($directory);
     }
 
     #[DataProvider('getAccessCheckDataForReadable')]
@@ -218,7 +164,8 @@ class AssetTest extends TestCase
         $file->setUid(2);
         $file->setGid(2);
         $file->setMode(0777);
-        $file->setParent($dir);
+
+        $dir->addChild($file);
 
         $this->assertTrue($file->isReadable(1, 1), 'Expected user to be able to read file');
         $this->assertFalse($file->isReadable(2, 2), 'Did not expect user to be able to read');
@@ -259,13 +206,12 @@ class AssetTest extends TestCase
     {
         $file   = new File('name');
         $dir    = new Directory('name');
-        $device = new Device('some name');
+        $device = new Device();
         $dir->addChild($file);
-        $device->addChild($dir);
+        $device->getRoot()->addChild($dir);
 
         $this->assertSame($device, $file->getDevice(), 'Incorrect instance returned');
         $this->assertSame($device, $dir->getDevice(), 'Incorrect instance returned');
-        $this->assertSame($device, $device->getDevice(), 'Incorrect instance returned');
     }
 
     public function testReturnNullIfThereIsNoDevice(): void

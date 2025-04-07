@@ -3,15 +3,16 @@ namespace TestFs;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use TestFs\Exception\InvalidArgumentException;
-use TestFs\Exception\NoSpaceLeftOnDeviceException;
+use TestFs\Exception\DuplicateAssetException;
+use TestFs\Exception\InsufficientStorageException;
+use TestFs\Exception\UnknownAssetException;
 
 #[CoversClass(Directory::class)]
 class DirectoryTest extends TestCase
 {
     public function testCanGetFileType(): void
     {
-        $this->assertSame(0040000, (new Directory('name'))->getType(), 'Incorrect directory type');
+        $this->assertSame(Asset::TYPE_DIRECTORY, (new Directory('name'))->getType(), 'Incorrect directory type');
     }
 
     public function testIsEmpty(): void
@@ -32,9 +33,9 @@ class DirectoryTest extends TestCase
         $dir->addChild($childFile);
 
         $this->assertSame($childDir, $dir->getChild('childDir'), 'Wrong child directory');
-        $this->assertSame($childDir, $dir->getChildDirectory('childDir'), 'Wrong child directory');
+        $this->assertSame($childDir, $dir->getDirectory('childDir'), 'Wrong child directory');
         $this->assertSame($childFile, $dir->getChild('childFile'), 'Wrong child file');
-        $this->assertSame($childFile, $dir->getChildFile('childFile'), 'Wrong child file');
+        $this->assertSame($childFile, $dir->getFile('childFile'), 'Wrong child file');
         $this->assertNull($dir->getChild('foobar'), 'Did not expect to find any child');
         $this->assertTrue($dir->hasDirectory('childDir'), 'Expected directory to have child directory');
         $this->assertFalse($dir->hasDirectory('childFile'), 'Did not expect directory to have child directory');
@@ -54,7 +55,8 @@ class DirectoryTest extends TestCase
 
         $dir->addChild($childDir);
 
-        $this->expectExceptionObject(new InvalidArgumentException('A child with the name "name" already exists'));
+        $this->expectException(DuplicateAssetException::class);
+        $this->expectExceptionMessage('Directory "name" already has a child named "name"');
         $dir->addChild($childFile);
     }
 
@@ -74,8 +76,7 @@ class DirectoryTest extends TestCase
     public function testThrowsExceptionWhenDeletingAChildThatDoesNotExist(): void
     {
         $dir = new Directory('name');
-
-        $this->expectExceptionObject(new InvalidArgumentException('Child "name" does not exist'));
+        $this->expectExceptionObject(new UnknownAssetException($dir));
         $dir->removeChild('name');
     }
 
@@ -103,12 +104,12 @@ class DirectoryTest extends TestCase
     public function testCanGenerateTree(): void
     {
         $tree = <<<TREE
-        parent/
+        parent
         ├── child dir
         │   └── child file of child dir
         └── child file
 
-        2 directories, 2 files
+        1 directory, 2 files
         TREE;
 
         $parent = new Directory('parent');
@@ -122,35 +123,25 @@ class DirectoryTest extends TestCase
         $this->assertSame($tree, $parent->tree(), 'Incorrect tree');
     }
 
-    public function testDirectoryFailsWhenAddingUnsupportedChildAsset(): void
-    {
-        $dir = new Directory('name');
-
-        $this->expectExceptionObject(new InvalidArgumentException('Unsupported asset type: TestFs\UnsupportedAsset'));
-        $dir->addChild(new UnsupportedAsset('name'));
-    }
-
     public function testThrowsExceptionWhenAddingChildWithNoSpaceLeftOnDevice(): void
     {
-        $device = new Device('name');
-        $device->setDeviceSize(1);
-
-        $this->expectExceptionObject(new NoSpaceLeftOnDeviceException('There is not enough space on the device to add the asset, available: 1 byte, asset: 18 bytes'));
-        $device->addChild(new File('name', 'this is my content'));
+        $device = new Device(1);
+        $this->expectExceptionObject(new InsufficientStorageException(1, 18));
+        $device->getRoot()->addChild(new File('name', 'this is my content'));
     }
 
     public function testAvailableDeviceSizeIncreasesWhenChildIsRemoved(): void
     {
-        $device = new Device('name');
-        $device->setDeviceSize(1000);
+        $device = new Device(1000);
+        $rootDir = $device->getRoot();
 
-        $device->addChild(new File('name1', 'this is my content'));
-        $device->addChild(new File('name2', 'this is some other content'));
+        $rootDir->addChild(new File('name1', 'this is my content'));
+        $rootDir->addChild(new File('name2', 'this is some other content'));
 
         $this->assertSame(956, $device->getAvailableSize(), 'Expected 956 bytes to be available on the device');
-        $device->removeChild('name1');
+        $rootDir->removeChild('name1');
         $this->assertSame(974, $device->getAvailableSize(), 'Expected 974 bytes to be available on the device');
-        $device->removeChild('name2');
+        $rootDir->removeChild('name2');
         $this->assertSame(1000, $device->getAvailableSize(), 'Expected 1000 bytes to be available on the device');
     }
 }

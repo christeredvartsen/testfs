@@ -34,12 +34,18 @@
   "autoload": {
     "psr-4": {
       "TestFs\\": "src/"
-    }
+    },
+    "files": [
+      "src/functions.php"
+    ]
   },
   "autoload-dev": {
     "psr-4": {
       "TestFs\\": "tests/"
-    }
+    },
+    "files": [
+      "src/functions.php"
+    ]
   },
   "scripts": {
     "test": "vendor/bin/phpunit",
