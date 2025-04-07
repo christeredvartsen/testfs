@@ -32,6 +32,53 @@ StreamWrapper::register();
 
 When it is registered it will pick up usage of the `tfs://` protocol used with filesystem functions, for instance `fopen()`, `file_get_contents()` and `mkdir()`.
 
+### Mirror a local directory into the virtual filesystem
+
+If you want to mirror a local directory into the virtual filesystem you can do this:
+
+```php
+require 'vendor/autoload.php';
+
+use TestFs\StreamWrapper;
+
+StreamWrapper::register();
+
+$device = StreamWrapper::getDevice();
+$device->buildFromDirectory('./src');
+
+echo $device->tree() . PHP_EOL;
+```
+
+If the above code would be executed from a PHP file in the root of this project you would get something like this:
+
+```
+/
+├── Asset.php
+├── Device.php
+├── Directory.php
+├── Exception
+│   ├── DuplicateAssetException.php
+│   ├── DuplicateGroupException.php
+│   ├── DuplicateUserException.php
+│   ├── InsufficientStorageException.php
+│   ├── InvalidAssetNameException.php
+│   ├── InvalidFopenModeException.php
+│   ├── InvalidUrlException.php
+│   ├── InvalidWhenceException.php
+│   ├── ProtocolAlreadyRegisteredException.php
+│   ├── RuntimeException.php
+│   ├── UnknownAssetException.php
+│   ├── UnknownGroupException.php
+│   └── UnknownUserException.php
+├── File.php
+├── FopenMode.php
+├── RootDirectory.php
+├── StreamWrapper.php
+└── functions.php
+
+1 directory, 21 files
+```
+
 ### Converting paths to URLs
 
 To convert regular file paths to URLs that will be picked up by TestFs you can use the `TestFs::url(string $path)` function:
@@ -46,7 +93,7 @@ echo url('path/to/file.php'); // tfs://path/to/file.php
 
 ```
 
-### Wrappers for regular file system functions
+### Wrappers for regular filesystem functions
 
 The library contains simple wrappers around some of the filesystem functions in PHP that automatically prefixes paths with the correct protocol:
 
@@ -56,11 +103,9 @@ require 'vendor/autoload.php';
 
 use TestFs\StreamWrapper;
 
-use function TestFs\{
-    file_get_contents,
-    file_put_contents,
-    mkdir,
-};
+use function TestFs\file_get_contents;
+use function TestFs\file_put_contents;
+use function TestFs\mkdir;
 
 StreamWrapper::register();
 
