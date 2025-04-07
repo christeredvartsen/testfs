@@ -64,6 +64,14 @@ function fopen(string $filename, string $mode, bool $use_include_path = false, $
 }
 
 /**
+ * @see https://www.php.net/manual/en/function.is_dir.php
+ */
+function is_dir(string $filename): bool
+{
+    return \is_dir(url($filename));
+}
+
+/**
  * @see https://www.php.net/manual/en/function.mkdir.php
  * @param ?resource $context
  */
