@@ -3,8 +3,8 @@ namespace TestFs;
 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use TestFs\Exception\BuildFromDirectoryException;
 use TestFs\Exception\InsufficientStorageException;
-use TestFs\Exception\InvalidPathException;
 
 use function file_get_contents as php_file_get_contents;
 use function is_dir as php_is_dir;
@@ -105,18 +105,18 @@ class Device
      * contents in the virtual filesystem will be overwritten. The directory specified in $path
      * will act as the root of the modified filesystem.
      *
-     * @throws InvalidPathException
+     * @throws BuildFromDirectoryException
      */
     public function buildFromDirectory(string $path, bool $includeFileContents = false): void
     {
         $realPath = realpath($path);
 
         if (false === $realPath) {
-            throw new InvalidPathException(sprintf('Path "%s" does not exist', $path));
+            throw new BuildFromDirectoryException(sprintf('Path "%s" does not exist', $path));
         }
 
         if (!php_is_dir($realPath)) {
-            throw new InvalidPathException(sprintf('Path "%s" is not a directory', $realPath));
+            throw new BuildFromDirectoryException(sprintf('Path "%s" is not a directory', $realPath));
         }
 
         $prefixLength = strlen($realPath);
@@ -134,18 +134,43 @@ class Device
                 $dirName = $trimPath($file->getRealpath());
 
                 if ('' !== $dirName && !is_dir($dirName)) {
-                    mkdir($dirName, $file->getPerms() & 0777);
+                    if (!mkdir($dirName, $file->getPerms() & 0777)) {
+                        throw new BuildFromDirectoryException(sprintf(
+                            'Failed to create directory "%s" in the virtual file system',
+                            $dirName,
+                        ));
+                    }
                 }
 
                 continue;
             }
 
             $filePath = $trimPath($file->getRealpath());
-            file_put_contents(
-                $filePath,
-                $includeFileContents ? php_file_get_contents($file->getRealpath()) : '',
-            );
-            chmod($filePath, $file->getPerms() & 0777);
+
+            $contents = '';
+            if ($includeFileContents) {
+                $contents = php_file_get_contents($file->getRealpath());
+                if (false === $contents) {
+                    throw new BuildFromDirectoryException(sprintf(
+                        'Failed to read contents of "%s"',
+                        $file->getRealpath(),
+                    ));
+                }
+            }
+
+            if (false === file_put_contents($filePath, $contents)) {
+                throw new BuildFromDirectoryException(sprintf(
+                    'Failed to write contents of "%s" to the virtual file system',
+                    $filePath,
+                ));
+            }
+
+            if (false === chmod($filePath, $file->getPerms() & 0777)) {
+                throw new BuildFromDirectoryException(sprintf(
+                    'Failed to set permissions of "%s" in the virtual file system',
+                    $filePath,
+                ));
+            }
         }
     }
 }
