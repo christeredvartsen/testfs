@@ -1,7 +1,5 @@
 # TestFs
 
-[![CI](https://github.com/christeredvartsen/testfs/actions/workflows/ci.yml/badge.svg)](https://github.com/christeredvartsen/testfs/actions/workflows/ci.yml)
-
 Virtual filesystem for PHP for use with testing, implemented using a [stream wrapper](https://www.php.net/manual/en/class.streamwrapper.php).
 
 ## Requirements

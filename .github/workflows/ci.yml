@@ -1,55 +1,51 @@
 name: CI
-on: push
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
 jobs:
   ci:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        php: ["8.3", "8.4"]
-
-    name: Run CI build
+        php:
+          - "8.3"
+          - "8.4"
+          - "8.5"
+    name: Validate and test on PHP ${{ matrix.php }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-
-      - name: PHP version
-        run: php -v
-
-      - name: PHP info
-        run: php -i
-
-      - name: PHP modules
-        run: php -m
-
-      - name: Validate composer files
-        run: composer validate --strict
-
-      - name: Get Composer Cache Directory
-        id: composer-cache-dir
+      - run: composer validate --strict
+      - id: composer-cache-dir
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v4
+      - id: composer-cache
+        uses: actions/cache@v5
         with:
           path: ${{ steps.composer-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-${{ matrix.php }}-composer-
-
-      - name: Install dependencies
-        run: composer install
-
-      - name: Run unit tests
-        run: vendor/bin/phpunit
-
-      - name: Run static analysis
-        run: vendor/bin/phpstan analyse
-
-      - name: Check coding standard
-        run: PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix --dry-run --diff
+      - run: composer install
+      - run: vendor/bin/phpunit
+      - run: vendor/bin/phpstan analyse
+      - run: PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer check --diff
+  branch-protection:
+    needs:
+      - ci
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    name: Branch protection
+    steps:
+      - if: ${{ needs.ci.result != 'success' }}
+        run: exit 1
+      - run: echo "All checks passed."

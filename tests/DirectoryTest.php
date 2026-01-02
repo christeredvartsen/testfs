@@ -26,8 +26,8 @@ class DirectoryTest extends TestCase
     {
         $dir = new Directory('name');
 
-        $childDir = $this->createConfiguredMock(Directory::class, ['getName' => 'childDir']);
-        $childFile = $this->createConfiguredMock(File::class, ['getName' => 'childFile']);
+        $childDir = $this->createConfiguredStub(Directory::class, ['getName' => 'childDir']);
+        $childFile = $this->createConfiguredStub(File::class, ['getName' => 'childFile']);
 
         $dir->addChild($childDir);
         $dir->addChild($childFile);
@@ -50,8 +50,8 @@ class DirectoryTest extends TestCase
     {
         $dir = new Directory('name');
 
-        $childDir = $this->createConfiguredMock(Directory::class, ['getName' => 'name']);
-        $childFile = $this->createConfiguredMock(File::class, ['getName' => 'name']);
+        $childDir = $this->createConfiguredStub(Directory::class, ['getName' => 'name']);
+        $childFile = $this->createConfiguredStub(File::class, ['getName' => 'name']);
 
         $dir->addChild($childDir);
 
@@ -64,7 +64,7 @@ class DirectoryTest extends TestCase
     {
         $dir = new Directory('name');
 
-        $child = $this->createConfiguredMock(Directory::class, ['getName' => 'name']);
+        $child = $this->createConfiguredStub(Directory::class, ['getName' => 'name']);
 
         $dir->addChild($child);
 
