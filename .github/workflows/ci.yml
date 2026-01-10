@@ -15,11 +15,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        composer-script:
+          - cs
+          - sa
+          - test
         php:
           - "8.3"
           - "8.4"
           - "8.5"
-    name: Validate and test on PHP ${{ matrix.php }}
+    name: composer run ${{ matrix.composer-script }} / PHP ${{ matrix.php }}
     steps:
       - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
@@ -33,12 +37,8 @@ jobs:
         with:
           path: ${{ steps.composer-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-php-${{ matrix.php }}-composer-
       - run: composer install
-      - run: vendor/bin/phpunit
-      - run: vendor/bin/phpstan analyse
-      - run: PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer check --diff
+      - run: composer run ${{ matrix.composer-script }}
   branch-protection:
     needs:
       - ci
