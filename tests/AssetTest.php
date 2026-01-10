@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -204,8 +205,8 @@ class AssetTest extends TestCase
 
     public function testCanGetDevice(): void
     {
-        $file   = new File('name');
-        $dir    = new Directory('name');
+        $file = new File('name');
+        $dir = new Directory('name');
         $device = new Device();
         $dir->addChild($file);
         $device->getRoot()->addChild($dir);
@@ -217,7 +218,7 @@ class AssetTest extends TestCase
     public function testReturnNullIfThereIsNoDevice(): void
     {
         $file = new File('name');
-        $dir  = new Directory('name');
+        $dir = new Directory('name');
         $dir->addChild($file);
 
         $this->assertNull($file->getDevice(), 'Did not expect any device');
@@ -231,11 +232,11 @@ class AssetTest extends TestCase
     {
         return [
             'empty name' => [
-                'name'             => ' ',
+                'name' => ' ',
                 'exceptionMessage' => 'Name can not be empty',
             ],
             'dir separators' => [
-                'name'             => 'foo/bar',
+                'name' => 'foo/bar',
                 'exceptionMessage' => 'Name can not contain a directory separator',
             ],
         ];
@@ -248,51 +249,51 @@ class AssetTest extends TestCase
     {
         return [
             'root user' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0444,
-                'checkUid'       => 0,
-                'checkGid'       => 0,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0444,
+                'checkUid' => 0,
+                'checkGid' => 0,
                 'expectedResult' => true,
             ],
             'root group' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0444,
-                'checkUid'       => 2,
-                'checkGid'       => 0,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0444,
+                'checkUid' => 2,
+                'checkGid' => 0,
                 'expectedResult' => true,
             ],
             'user has access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0444,
-                'checkUid'       => 1,
-                'checkGid'       => 2,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0444,
+                'checkUid' => 1,
+                'checkGid' => 2,
                 'expectedResult' => true,
             ],
             'group has access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0444,
-                'checkUid'       => 2,
-                'checkGid'       => 1,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0444,
+                'checkUid' => 2,
+                'checkGid' => 1,
                 'expectedResult' => true,
             ],
             'everyone has access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0444,
-                'checkUid'       => 2,
-                'checkGid'       => 2,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0444,
+                'checkUid' => 2,
+                'checkGid' => 2,
                 'expectedResult' => true,
             ],
             'no access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0440,
-                'checkUid'       => 2,
-                'checkGid'       => 2,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0440,
+                'checkUid' => 2,
+                'checkGid' => 2,
                 'expectedResult' => false,
             ],
         ];
@@ -305,51 +306,51 @@ class AssetTest extends TestCase
     {
         return [
             'root user' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0666,
-                'checkUid'       => 0,
-                'checkGid'       => 0,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0666,
+                'checkUid' => 0,
+                'checkGid' => 0,
                 'expectedResult' => true,
             ],
             'root group' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0666,
-                'checkUid'       => 2,
-                'checkGid'       => 0,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0666,
+                'checkUid' => 2,
+                'checkGid' => 0,
                 'expectedResult' => true,
             ],
             'user has access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0666,
-                'checkUid'       => 1,
-                'checkGid'       => 2,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0666,
+                'checkUid' => 1,
+                'checkGid' => 2,
                 'expectedResult' => true,
             ],
             'group has access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0666,
-                'checkUid'       => 2,
-                'checkGid'       => 1,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0666,
+                'checkUid' => 2,
+                'checkGid' => 1,
                 'expectedResult' => true,
             ],
             'everyone has access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0666,
-                'checkUid'       => 2,
-                'checkGid'       => 2,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0666,
+                'checkUid' => 2,
+                'checkGid' => 2,
                 'expectedResult' => true,
             ],
             'no access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0660,
-                'checkUid'       => 2,
-                'checkGid'       => 2,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0660,
+                'checkUid' => 2,
+                'checkGid' => 2,
                 'expectedResult' => false,
             ],
         ];
@@ -362,51 +363,51 @@ class AssetTest extends TestCase
     {
         return [
             'root user' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0555,
-                'checkUid'       => 0,
-                'checkGid'       => 0,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0555,
+                'checkUid' => 0,
+                'checkGid' => 0,
                 'expectedResult' => true,
             ],
             'root group' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0555,
-                'checkUid'       => 2,
-                'checkGid'       => 0,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0555,
+                'checkUid' => 2,
+                'checkGid' => 0,
                 'expectedResult' => true,
             ],
             'user has access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0555,
-                'checkUid'       => 1,
-                'checkGid'       => 2,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0555,
+                'checkUid' => 1,
+                'checkGid' => 2,
                 'expectedResult' => true,
             ],
             'group has access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0555,
-                'checkUid'       => 2,
-                'checkGid'       => 1,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0555,
+                'checkUid' => 2,
+                'checkGid' => 1,
                 'expectedResult' => true,
             ],
             'everyone has access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0555,
-                'checkUid'       => 2,
-                'checkGid'       => 2,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0555,
+                'checkUid' => 2,
+                'checkGid' => 2,
                 'expectedResult' => true,
             ],
             'no access' => [
-                'ownerUid'       => 1,
-                'ownerGid'       => 1,
-                'mode'           => 0550,
-                'checkUid'       => 2,
-                'checkGid'       => 2,
+                'ownerUid' => 1,
+                'ownerGid' => 1,
+                'mode' => 0550,
+                'checkUid' => 2,
+                'checkGid' => 2,
                 'expectedResult' => false,
             ],
         ];

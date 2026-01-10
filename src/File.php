@@ -1,44 +1,58 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
 
 use TestFs\Exception\InvalidWhenceException;
 
+use function array_key_exists;
+use function in_array;
+use function strlen;
+
+use const E_USER_NOTICE;
+use const LOCK_EX;
+use const LOCK_SH;
+use const LOCK_UN;
+use const SEEK_CUR;
+use const SEEK_END;
+use const SEEK_SET;
+use const STR_PAD_RIGHT;
+
 class File extends Asset
 {
     /**
-     * File size
+     * File size.
      */
     private int $size = 0;
 
     /**
-     * Current offset in the file
+     * Current offset in the file.
      */
     private int $offset = 0;
 
     /**
-     * Identifier of the resource who owns the exclusive lock
+     * Identifier of the resource who owns the exclusive lock.
      */
     private ?string $exclusiveLock = null;
 
     /**
-     * Resources who has a shared lock, IDs as key
+     * Resources who has a shared lock, IDs as key.
      *
      * @var array<string,true>
      */
     private array $sharedLocks = [];
 
     /**
-     * Whether or not the file was opened with mode 'a'
+     * Whether or not the file was opened with mode 'a'.
      */
     private bool $append = false;
 
     /**
-     * Whether or not the file has been opened for reading
+     * Whether or not the file has been opened for reading.
      */
     private bool $read = true;
 
     /**
-     * Whether or not the file has been opened for writing
+     * Whether or not the file has been opened for writing.
      */
     private bool $write = true;
 
@@ -58,7 +72,7 @@ class File extends Asset
     }
 
     /**
-     * Create a new file
+     * Create a new file.
      */
     public function __construct(string $name, private string $contents = '')
     {
@@ -67,7 +81,7 @@ class File extends Asset
     }
 
     /**
-     * Set read flag
+     * Set read flag.
      */
     public function setRead(bool $read): void
     {
@@ -75,7 +89,7 @@ class File extends Asset
     }
 
     /**
-     * Set write flag
+     * Set write flag.
      */
     public function setWrite(bool $write): void
     {
@@ -83,7 +97,7 @@ class File extends Asset
     }
 
     /**
-     * Get file contents
+     * Get file contents.
      *
      * Using this method does not touch the internal offset or access timestamp.
      */
@@ -93,7 +107,7 @@ class File extends Asset
     }
 
     /**
-     * Get the current offset
+     * Get the current offset.
      */
     public function getOffset(): int
     {
@@ -101,7 +115,7 @@ class File extends Asset
     }
 
     /**
-     * Read an amount of bytes from the current offset, and update the offset
+     * Read an amount of bytes from the current offset, and update the offset.
      *
      * This method also updates the access time of the file.
      */
@@ -119,7 +133,7 @@ class File extends Asset
     }
 
     /**
-     * Check if the offset is at the end of file (EOF)
+     * Check if the offset is at the end of file (EOF).
      */
     public function eof(): bool
     {
@@ -127,7 +141,7 @@ class File extends Asset
     }
 
     /**
-     * Write data at the current offset, update the offset and return the number of bytes written
+     * Write data at the current offset, update the offset and return the number of bytes written.
      *
      * This method will also update the file modification time.
      */
@@ -168,7 +182,7 @@ class File extends Asset
     }
 
     /**
-     * Truncate the file to a given length
+     * Truncate the file to a given length.
      *
      * This method will also update the file modification time. The internal offset is not updated.
      */
@@ -191,7 +205,7 @@ class File extends Asset
     }
 
     /**
-     * Rewind the offset to the start of the file
+     * Rewind the offset to the start of the file.
      */
     public function rewind(): void
     {
@@ -199,7 +213,7 @@ class File extends Asset
     }
 
     /**
-     * Forward the offset to EOF
+     * Forward the offset to EOF.
      */
     public function forward(): void
     {
@@ -207,7 +221,7 @@ class File extends Asset
     }
 
     /**
-     * Set the internal offset
+     * Set the internal offset.
      *
      * If the offset is beyond EOF, fill the gap with \0. If this is the case, also update the file modification time.
      *
@@ -219,11 +233,11 @@ class File extends Asset
             return false;
         }
 
-        $this->offset = match($whence) {
+        $this->offset = match ($whence) {
             SEEK_SET => $offset,
             SEEK_CUR => $this->offset + $offset,
             SEEK_END => $this->size + $offset,
-            default  => throw new InvalidWhenceException($whence),
+            default => throw new InvalidWhenceException($whence),
         };
 
         if ($this->offset > $this->size) {
@@ -236,7 +250,7 @@ class File extends Asset
     }
 
     /**
-     * Lock the file
+     * Lock the file.
      *
      * The following operations are supported:
      *
@@ -274,7 +288,7 @@ class File extends Asset
     }
 
     /**
-     * Check for an exclusive lock
+     * Check for an exclusive lock.
      */
     public function hasExclusiveLock(?string $id = null): bool
     {
@@ -286,7 +300,7 @@ class File extends Asset
     }
 
     /**
-     * Check for a shared lock
+     * Check for a shared lock.
      */
     public function hasSharedLock(?string $id = null): bool
     {
@@ -298,7 +312,7 @@ class File extends Asset
     }
 
     /**
-     * Check for a file lock
+     * Check for a file lock.
      */
     public function isLocked(?string $id = null): bool
     {
@@ -306,7 +320,7 @@ class File extends Asset
     }
 
     /**
-     * Unlock the file
+     * Unlock the file.
      */
     public function unlock(string $id): void
     {
@@ -318,7 +332,7 @@ class File extends Asset
     }
 
     /**
-     * Set append mode
+     * Set append mode.
      */
     public function setAppendMode(bool $append): void
     {
@@ -326,7 +340,7 @@ class File extends Asset
     }
 
     /**
-     * Get the append mode
+     * Get the append mode.
      */
     public function getAppendMode(): bool
     {

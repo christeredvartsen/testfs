@@ -1,5 +1,8 @@
 <?php declare(strict_types=1);
+
 namespace TestFs\Exception;
+
+use function sprintf;
 
 class ProtocolAlreadyRegisteredException extends RuntimeException
 {

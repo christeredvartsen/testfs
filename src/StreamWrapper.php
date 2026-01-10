@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
 
 use ArrayIterator;
@@ -10,32 +11,54 @@ use TestFs\Exception\ProtocolAlreadyRegisteredException;
 use TestFs\Exception\UnknownGroupException;
 use TestFs\Exception\UnknownUserException;
 
+use function array_slice;
+use function assert;
+use function count;
+use function in_array;
+use function is_array;
+use function is_string;
+use function sprintf;
+
+use const E_USER_WARNING;
+use const LOCK_NB;
+use const SEEK_END;
+use const SEEK_SET;
+use const STREAM_META_ACCESS;
+use const STREAM_META_GROUP;
+use const STREAM_META_GROUP_NAME;
+use const STREAM_META_OWNER;
+use const STREAM_META_OWNER_NAME;
+use const STREAM_META_TOUCH;
+use const STREAM_MKDIR_RECURSIVE;
+use const STREAM_URL_STAT_QUIET;
+use const STREAM_USE_PATH;
+
 class StreamWrapper
 {
     /**
-     * Resource updated by PHP
+     * Resource updated by PHP.
      *
      * @var ?resource
      */
     public $context;
 
     /**
-     * Device asset
+     * Device asset.
      */
     private static ?Device $device = null;
 
     /**
-     * Wrapper protocol name
+     * Wrapper protocol name.
      */
     private static string $protocol = 'tfs';
 
     /**
-     * User ID of the user
+     * User ID of the user.
      */
     private static int $uid = 0;
 
     /**
-     * Default user database
+     * Default user database.
      *
      * This database is set when registering the wrapper
      *
@@ -46,19 +69,19 @@ class StreamWrapper
     ];
 
     /**
-     * User database
+     * User database.
      *
      * @var array<int,string>
      */
     private static array $users = [];
 
     /**
-     * Group ID of the user
+     * Group ID of the user.
      */
     private static int $gid = 0;
 
     /**
-     * Default group database
+     * Default group database.
      *
      * This database is set when registering the wrapper
      *
@@ -66,32 +89,32 @@ class StreamWrapper
      */
     private static array $defaultGroups = [
         0 => [
-            'name'    => 'root',
+            'name' => 'root',
             'members' => [0],
         ],
     ];
 
     /**
-     * Group database
+     * Group database.
      *
      * @var array<int,array{name:string,members:array<int>}>
      */
     private static $groups = [];
 
     /**
-     * Iterator used for the opendir/readdir/resetdir/closedir functions
+     * Iterator used for the opendir/readdir/resetdir/closedir functions.
      *
      * @var ?ArrayIterator<int,Asset>
      */
     private ?ArrayIterator $directoryIterator = null;
 
     /**
-     * Handle used for fopen() and related functions
+     * Handle used for fopen() and related functions.
      */
     private ?File $fileHandle = null;
 
     /**
-     * Add a user
+     * Add a user.
      *
      * @throws DuplicateUserException
      */
@@ -105,9 +128,10 @@ class StreamWrapper
     }
 
     /**
-     * Add a group
+     * Add a group.
      *
      * @param list<int> $members
+     *
      * @throws DuplicateGroupException
      */
     public static function addGroup(int $gid, string $name, array $members = []): void
@@ -117,13 +141,13 @@ class StreamWrapper
         }
 
         self::$groups[$gid] = [
-            'name'    => $name,
+            'name' => $name,
             'members' => $members,
         ];
     }
 
     /**
-     * Get the current user ID
+     * Get the current user ID.
      */
     public static function getUid(): int
     {
@@ -131,7 +155,7 @@ class StreamWrapper
     }
 
     /**
-     * Set the current user ID
+     * Set the current user ID.
      *
      * @throws UnknownUserException
      */
@@ -145,7 +169,7 @@ class StreamWrapper
     }
 
     /**
-     * Get the current group ID
+     * Get the current group ID.
      */
     public static function getGid(): int
     {
@@ -153,7 +177,7 @@ class StreamWrapper
     }
 
     /**
-     * Set the current group ID
+     * Set the current group ID.
      *
      * @throws UnknownGroupException
      */
@@ -167,7 +191,7 @@ class StreamWrapper
     }
 
     /**
-     * Register the stream wrapper and create the filesystem device
+     * Register the stream wrapper and create the filesystem device.
      *
      * @see https://www.php.net/manual/en/function.stream-wrapper-register.php
      *
@@ -183,7 +207,7 @@ class StreamWrapper
             self::unregister();
         }
 
-        self::$users  = self::$defaultUsers;
+        self::$users = self::$defaultUsers;
         self::$groups = self::$defaultGroups;
         self::setUid($uid);
         self::setGid($gid);
@@ -194,23 +218,23 @@ class StreamWrapper
     }
 
     /**
-     * Un-register the stream wrapper and destroy the filesystem device
+     * Un-register the stream wrapper and destroy the filesystem device.
      *
      * @see https://www.php.net/manual/en/function.stream-wrapper-unregister.php
      */
     public static function unregister(): bool
     {
         self::$device = null;
-        self::$uid    = 0;
-        self::$gid    = 0;
-        self::$users  = [];
+        self::$uid = 0;
+        self::$gid = 0;
+        self::$users = [];
         self::$groups = [];
 
         return stream_wrapper_unregister(self::$protocol);
     }
 
     /**
-     * Get the filesystem device
+     * Get the filesystem device.
      */
     public static function getDevice(): ?Device
     {
@@ -218,7 +242,7 @@ class StreamWrapper
     }
 
     /**
-     * Get a TestFs URL given a path
+     * Get a TestFs URL given a path.
      */
     public static function url(string $path): string
     {
@@ -226,7 +250,7 @@ class StreamWrapper
     }
 
     /**
-     * Get a path given a stream URL
+     * Get a path given a stream URL.
      *
      * @throws InvalidUrlException
      */
@@ -251,23 +275,26 @@ class StreamWrapper
     }
 
     /**
-     * Close directory handle
+     * Close directory handle.
      *
      * Rewind the directory, then unset the internal reference to the asset.
      *
      * @see https://www.php.net/manual/en/streamwrapper.dir-closedir.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function dir_closedir(): true
     {
         $this->directoryIterator = null;
+
         return true;
     }
 
     /**
-     * Open directory
+     * Open directory.
      *
      * @see https://www.php.net/manual/en/streamwrapper.dir-opendir.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function dir_opendir(string $path, int $options): bool
@@ -276,16 +303,19 @@ class StreamWrapper
 
         if (null === $asset) {
             $this->warn(sprintf('opendir(%s): failed to open dir: No such file or directory', $path));
+
             return false;
         }
 
         if (!($asset instanceof Directory)) {
             $this->warn(sprintf('opendir(%s): failed to open dir: Not a directory', $path));
+
             return false;
         }
 
         if (!$asset->isReadable(self::$uid, self::$gid)) {
             $this->warn(sprintf('Warning: opendir(%s): failed to open dir: Permission denied', $path));
+
             return false;
         }
 
@@ -295,9 +325,10 @@ class StreamWrapper
     }
 
     /**
-     * Return the next filename
+     * Return the next filename.
      *
      * @see https://www.php.net/manual/en/streamwrapper.dir-readdir.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function dir_readdir(): false|string
@@ -317,9 +348,10 @@ class StreamWrapper
     }
 
     /**
-     * Rewind directory handle
+     * Rewind directory handle.
      *
      * @see https://www.php.net/manual/en/streamwrapper.dir-rewinddir.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function dir_rewinddir(): bool
@@ -329,13 +361,15 @@ class StreamWrapper
         }
 
         $this->directoryIterator->rewind();
+
         return true;
     }
 
     /**
-     * Create a directory
+     * Create a directory.
      *
      * @see https://www.php.net/manual/en/streamwrapper.mkdir.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function mkdir(string $path, int $mode, int $options): bool
@@ -345,6 +379,7 @@ class StreamWrapper
 
         if (null === $current) {
             $this->warn('mkdir(): Stream wrapper has not been properly initialized');
+
             return false;
         }
 
@@ -358,17 +393,20 @@ class StreamWrapper
 
             if ($lastPart && null !== $child) {
                 $this->warn('mkdir(): File exists');
+
                 return false;
             }
 
             if (!$lastPart && !$recursive && null === $child) {
                 $this->warn('mkdir(): No such file or directory');
+
                 return false;
             }
 
             if (null === $child) {
                 if (!$current->isWritable(self::$uid, self::$gid)) {
                     $this->warn('mkdir(): Permission denied');
+
                     return false;
                 }
 
@@ -384,13 +422,14 @@ class StreamWrapper
     }
 
     /**
-     * Rename a file or directory
+     * Rename a file or directory.
      *
      * Attempts to rename oldname to newname, moving it between directories if necessary. If
      * renaming a file and newname exists, it will be overwritten. If renaming a directory and
      * newname exists, this function will emit a warning.
      *
      * @see https://www.php.net/manual/en/streamwrapper.rename.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function rename(string $from, string $to): bool
@@ -401,16 +440,19 @@ class StreamWrapper
 
         if (null === $origin || null === $targetParent) {
             $this->warn(sprintf('rename(%s,%s): No such file or directory', $from, $to));
+
             return false;
         }
 
         if ($target instanceof Directory) {
             $this->warn(sprintf('rename(%s,%s): Is a directory', $from, $to));
+
             return false;
         }
 
         if (($origin instanceof Directory) && ($target instanceof File)) {
             $this->warn(sprintf('rename(%s,%s): Not a directory', $from, $to));
+
             return false;
         }
 
@@ -425,9 +467,10 @@ class StreamWrapper
     }
 
     /**
-     * Remove a directory
+     * Remove a directory.
      *
      * @see https://www.php.net/manual/en/streamwrapper.rmdir.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function rmdir(string $path, int $options): bool
@@ -437,21 +480,25 @@ class StreamWrapper
 
         if (null === $asset) {
             $this->warn(sprintf('rmdir(%s): No such file or directory', $path));
+
             return false;
         }
 
         if (!($asset instanceof Directory)) {
             $this->warn(sprintf('rmdir(%s): Not a directory', $path));
+
             return false;
         }
 
         if (!$asset->isEmpty()) {
             $this->warn(sprintf('rmdir(%s): Not empty', $path));
+
             return false;
         }
 
         if (!$asset->isWritable(self::$uid, self::$gid)) {
             $this->warn(sprintf('rmdir(%s): Permission denied', $path));
+
             return false;
         }
 
@@ -461,9 +508,10 @@ class StreamWrapper
     }
 
     /**
-     * Retrieve the underlaying resource
+     * Retrieve the underlaying resource.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-cast.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_cast(int $castAs): false
@@ -472,11 +520,12 @@ class StreamWrapper
     }
 
     /**
-     * Close the current file handle
+     * Close the current file handle.
      *
      * This method will also rewind the internal pointer in the file asset
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-close.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_close(): void
@@ -492,9 +541,10 @@ class StreamWrapper
     }
 
     /**
-     * Check if the stream is EOF
+     * Check if the stream is EOF.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-eof.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_eof(): bool
@@ -503,9 +553,10 @@ class StreamWrapper
     }
 
     /**
-     * Flush output
+     * Flush output.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-flush.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_flush(): false
@@ -514,9 +565,10 @@ class StreamWrapper
     }
 
     /**
-     * File locking
+     * File locking.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-lock.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_lock(int $operation): bool
@@ -529,10 +581,12 @@ class StreamWrapper
     }
 
     /**
-     * Get stream metadata
+     * Get stream metadata.
      *
-     * @param mixed $value
+     * @param mixed $value Value depends on $option
+     *
      * @see https://www.php.net/manual/en/streamwrapper.stream-metadata.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_metadata(string $path, int $option, $value): bool
@@ -545,11 +599,12 @@ class StreamWrapper
                 if (null === $asset) {
                     $parent = $this->getAssetParent($path);
 
-                    if ($parent === null) {
+                    if (null === $parent) {
                         $this->warn(sprintf(
                             'touch(): Unable to create file %s because No such file or directory',
                             $path,
                         ));
+
                         return false;
                     }
 
@@ -574,6 +629,7 @@ class StreamWrapper
 
                     if (null === $uid) {
                         $this->warn(sprintf('chown(): Unable to find uid for %s', $value));
+
                         return false;
                     }
                 } else {
@@ -584,16 +640,19 @@ class StreamWrapper
 
                 if (null === $asset) {
                     $this->warn('chown(): No such file or directory');
+
                     return false;
                 }
 
                 if (null === $uid) {
                     $this->warn('chown(): Operation not permitted');
+
                     return false;
                 }
 
                 if (0 !== self::$uid && (!$asset->isOwnedByUser(self::$uid) || self::$uid !== $uid)) {
                     $this->warn('chown(): Operation not permitted');
+
                     return false;
                 }
 
@@ -607,6 +666,7 @@ class StreamWrapper
 
                     if (null === $gid) {
                         $this->warn(sprintf('chgrp(): Unable to find gid for %s', $value));
+
                         return false;
                     }
                 } else {
@@ -617,16 +677,19 @@ class StreamWrapper
 
                 if (null === $asset) {
                     $this->warn('chgrp(): No such file or directory');
+
                     return false;
                 }
 
                 if (null === $gid) {
                     $this->warn('chgrp(): Operation not permitted');
+
                     return false;
                 }
 
                 if (0 !== self::$uid && (!$asset->isOwnedByUser(self::$uid) || !$this->userIsInGroup(self::$uid, $gid))) {
                     $this->warn('chgrp(): Operation not permitted');
+
                     return false;
                 }
 
@@ -648,9 +711,10 @@ class StreamWrapper
     }
 
     /**
-     * Open file
+     * Open file.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-open.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_open(string $path, string $mode, int $options, ?string &$opened_path): bool
@@ -661,11 +725,13 @@ class StreamWrapper
 
         if ((bool) (STREAM_USE_PATH & $options)) {
             $this->warn('TestFs does not support "use_include_path"');
+
             return false;
         }
 
         if (null === $parent) {
             $this->warn(sprintf('fopen(%s): failed to open stream: No such file or directory', $path));
+
             return false;
         }
 
@@ -673,26 +739,31 @@ class StreamWrapper
             $mode = $this->parseFopenMode($mode);
         } catch (InvalidFopenModeException $e) {
             $this->warn(sprintf('fopen(): %s', $e->getMessage()));
+
             return false;
         }
 
         if ($asset instanceof Directory) {
             $this->warn(sprintf('fopen(%s): failed to open stream. Is a directory', $path));
+
             return false;
         }
 
         if (null === $asset && !$mode->create()) {
             $this->warn(sprintf('fopen(%s): failed to open stream: No such file or directory', $path));
+
             return false;
         }
 
         if (null === $asset && !$parent->isWritable(self::$uid, self::$gid)) {
             $this->warn(sprintf('fopen(%s): failed to open stream: Permission denied', $path));
+
             return false;
         }
 
         if (null !== $asset && $mode->read() && !$asset->isReadable(self::$uid, self::$gid)) {
             $this->warn(sprintf('fopen(%s): failed to open stream: Permission denied', $path));
+
             return false;
         }
 
@@ -720,9 +791,10 @@ class StreamWrapper
     }
 
     /**
-     * Read from a stream
+     * Read from a stream.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-read.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_read(int $count): string|false
@@ -731,9 +803,10 @@ class StreamWrapper
     }
 
     /**
-     * Move internal pointer in the file asset
+     * Move internal pointer in the file asset.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-seek.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_seek(int $offset, int $whence = SEEK_SET): bool
@@ -742,9 +815,10 @@ class StreamWrapper
     }
 
     /**
-     * Set stream options
+     * Set stream options.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-set-option.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_set_option(int $option, int $arg1, ?int $arg2): false
@@ -753,10 +827,12 @@ class StreamWrapper
     }
 
     /**
-     * Stream stat
+     * Stream stat.
      *
      * @return array<mixed>|false
+     *
      * @see https://www.php.net/manual/en/streamwrapper.stream-stat.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_stat(): array|false
@@ -769,9 +845,10 @@ class StreamWrapper
     }
 
     /**
-     * Get the current offset in the file
+     * Get the current offset in the file.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-tell.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_tell(): int
@@ -780,9 +857,10 @@ class StreamWrapper
     }
 
     /**
-     * Truncate file
+     * Truncate file.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-truncate.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_truncate(int $size): bool
@@ -791,9 +869,10 @@ class StreamWrapper
     }
 
     /**
-     * Write to a stream
+     * Write to a stream.
      *
      * @see https://www.php.net/manual/en/streamwrapper.stream-write.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function stream_write(string $data): int
@@ -802,9 +881,10 @@ class StreamWrapper
     }
 
     /**
-     * Remove a file
+     * Remove a file.
      *
      * @see https://www.php.net/manual/en/streamwrapper.unlink.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function unlink(string $path): bool
@@ -814,11 +894,13 @@ class StreamWrapper
 
         if (null === $asset) {
             $this->warn(sprintf('unlink(%s): No such file or directory', $path));
+
             return false;
         }
 
         if ($asset instanceof Directory) {
             $this->warn(sprintf('unlink(%s): Is a directory', $path));
+
             return false;
         }
 
@@ -826,11 +908,13 @@ class StreamWrapper
 
         if (null === $parent) {
             $this->warn(sprintf('unlink(%s): No such file or directory', $path));
+
             return false;
         }
 
         if (!$parent->isWritable(self::$uid, self::$gid)) {
             $this->warn(sprintf('unlink(%s): Permission denied', $path));
+
             return false;
         }
 
@@ -840,10 +924,12 @@ class StreamWrapper
     }
 
     /**
-     * Retrieve information about a file
+     * Retrieve information about a file.
      *
      * @return array<mixed>|false
+     *
      * @see https://www.php.net/manual/en/streamwrapper.url-stat.php
+     *
      * @internal This method is not meant to be called directly from userland code
      */
     public function url_stat(string $path, int $flags): array|false
@@ -860,6 +946,7 @@ class StreamWrapper
 
         if (!$asset->isReadable(self::$uid, self::$gid)) {
             $this->warn(sprintf('stat(): stat failed for %s', $path));
+
             return false;
         }
 
@@ -867,7 +954,7 @@ class StreamWrapper
     }
 
     /**
-     * Get the asset at a specific path
+     * Get the asset at a specific path.
      */
     private function getAsset(string $path): ?Asset
     {
@@ -888,7 +975,7 @@ class StreamWrapper
     }
 
     /**
-     * Get the parent asset at a specific path
+     * Get the parent asset at a specific path.
      *
      * Given "foo/bar/baz.txt" this method will return the "foo/bar" directory, if it exists.
      */
@@ -898,6 +985,7 @@ class StreamWrapper
 
         if ('' !== $parentPath) {
             $asset = $this->getAsset($parentPath);
+
             return $asset instanceof Directory ? $asset : null;
         }
 
@@ -905,7 +993,7 @@ class StreamWrapper
     }
 
     /**
-     * Trigger a warning
+     * Trigger a warning.
      */
     private function warn(string $message): void
     {
@@ -913,7 +1001,7 @@ class StreamWrapper
     }
 
     /**
-     * Parse the mode used with fopen()
+     * Parse the mode used with fopen().
      *
      * @throws InvalidFopenModeException
      */
@@ -931,7 +1019,7 @@ class StreamWrapper
     }
 
     /**
-     * Get an asset from a URL
+     * Get an asset from a URL.
      */
     private function getAssetFromUrl(string $url): ?Asset
     {
@@ -939,33 +1027,33 @@ class StreamWrapper
     }
 
     /**
-     * Stat an asset
+     * Stat an asset.
      *
      * @return array<mixed>
      */
     private function assetStat(Asset $asset): array
     {
         $stat = [
-            'dev'     => 0,
-            'ino'     => 0,
-            'mode'    => $asset->getType() | $asset->getMode(),
-            'nlink'   => 0,
-            'uid'     => $asset->getUid(),
-            'gid'     => $asset->getGid(),
-            'rdev'    => 0,
-            'size'    => $asset->getSize(),
-            'atime'   => $asset->getLastAccessed(),
-            'mtime'   => $asset->getLastModified(),
-            'ctime'   => $asset->getLastMetadataModified(),
+            'dev' => 0,
+            'ino' => 0,
+            'mode' => $asset->getType() | $asset->getMode(),
+            'nlink' => 0,
+            'uid' => $asset->getUid(),
+            'gid' => $asset->getGid(),
+            'rdev' => 0,
+            'size' => $asset->getSize(),
+            'atime' => $asset->getLastAccessed(),
+            'mtime' => $asset->getLastModified(),
+            'ctime' => $asset->getLastMetadataModified(),
             'blksize' => 0,
-            'blocks'  => 0,
+            'blocks' => 0,
         ];
 
         return array_merge(array_values($stat), $stat);
     }
 
     /**
-     * Get the ID of this instance used for locking
+     * Get the ID of this instance used for locking.
      */
     private function getLockId(): string
     {
@@ -973,7 +1061,7 @@ class StreamWrapper
     }
 
     /**
-     * Check if a user is a member of a group
+     * Check if a user is a member of a group.
      */
     private function userIsInGroup(int $uid, int $gid): bool
     {

@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -94,6 +95,6 @@ class DeviceTest extends TestCase
     {
         $this->expectException(BuildFromDirectoryException::class);
         $this->expectExceptionMessageMatches('/^Path .* does not exist$/');
-        $this->device->buildFromDirectory(__DIR__ . '/non-existing-directory');
+        $this->device->buildFromDirectory(__DIR__.'/non-existing-directory');
     }
 }

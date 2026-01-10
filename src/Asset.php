@@ -1,89 +1,92 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
 
 use TestFs\Exception\DuplicateAssetException;
 use TestFs\Exception\InvalidAssetNameException;
 
+use const DIRECTORY_SEPARATOR;
+
 abstract class Asset
 {
-    public const TYPE_FILE      = 0100000;
+    public const TYPE_FILE = 0100000;
     public const TYPE_DIRECTORY = 0040000;
 
     /**
-     * Name of the asset
+     * Name of the asset.
      */
     private string $name;
 
     /**
-     * Parent directory of the asset
+     * Parent directory of the asset.
      */
     private ?Directory $parent = null;
 
     /**
-     * Last accessed time
+     * Last accessed time.
      */
     protected int $atime;
 
     /**
-     * Last modified time
+     * Last modified time.
      */
     protected int $mtime;
 
     /**
-     * Last metadata changed time
+     * Last metadata changed time.
      */
     protected int $ctime;
 
     /**
-     * User ID of the asset
+     * User ID of the asset.
      */
     private int $uid;
 
     /**
-     * Group ID of the asset
+     * Group ID of the asset.
      */
     private int $gid;
 
     /**
-     * Mode of the asset
+     * Mode of the asset.
      */
     protected int $mode;
 
     /**
-     * Create a new asset
+     * Create a new asset.
      */
     public function __construct(string $name)
     {
         $this->setName($name);
 
-        $time        = time();
+        $time = time();
         $this->atime = $time;
         $this->mtime = $time;
         $this->ctime = $time;
-        $this->uid   = StreamWrapper::getUid();
-        $this->gid   = StreamWrapper::getGid();
-        $this->mode  = $this->getDefaultMode();
+        $this->uid = StreamWrapper::getUid();
+        $this->gid = StreamWrapper::getGid();
+        $this->mode = $this->getDefaultMode();
     }
 
     /**
-     * Get the asset type
+     * Get the asset type.
      *
      * Should be one of the TYPE_ constants defined in this class.
      */
     abstract public function getType(): int;
 
     /**
-     * Get the size of the asset in bytes, including child assets
+     * Get the size of the asset in bytes, including child assets.
      */
     abstract public function getSize(): int;
 
     /**
-     * Get the default mode of the asset
+     * Get the default mode of the asset.
      */
     abstract protected function getDefaultMode(): int;
 
     /**
-     * Get last accessed timestamp
+     * Get last accessed timestamp.
      */
     public function getLastAccessed(): int
     {
@@ -91,7 +94,7 @@ abstract class Asset
     }
 
     /**
-     * Set the last accessed timestamp
+     * Set the last accessed timestamp.
      *
      * If a value of 0 or below is specified, the current time will be used.
      */
@@ -101,7 +104,7 @@ abstract class Asset
     }
 
     /**
-     * Get last modified timestamp
+     * Get last modified timestamp.
      */
     public function getLastModified(): int
     {
@@ -109,7 +112,7 @@ abstract class Asset
     }
 
     /**
-     * Set the last modification timestamp
+     * Set the last modification timestamp.
      *
      * If a value of 0 or below is specified, the current time will be used.
      */
@@ -119,7 +122,7 @@ abstract class Asset
     }
 
     /**
-     * Get last inode change timestamp
+     * Get last inode change timestamp.
      */
     public function getLastMetadataModified(): int
     {
@@ -127,7 +130,7 @@ abstract class Asset
     }
 
     /**
-     * Set the last inode change timestamp
+     * Set the last inode change timestamp.
      *
      * If a value of 0 or below is specified, the current time will be used.
      */
@@ -137,7 +140,7 @@ abstract class Asset
     }
 
     /**
-     * Set the UID of the asset
+     * Set the UID of the asset.
      */
     public function setUid(int $uid): void
     {
@@ -146,7 +149,7 @@ abstract class Asset
     }
 
     /**
-     * Set the GID of the asset
+     * Set the GID of the asset.
      */
     public function setGid(int $gid): void
     {
@@ -155,7 +158,7 @@ abstract class Asset
     }
 
     /**
-     * Get the UID
+     * Get the UID.
      */
     public function getUid(): int
     {
@@ -163,7 +166,7 @@ abstract class Asset
     }
 
     /**
-     * Get the GID
+     * Get the GID.
      */
     public function getGid(): int
     {
@@ -171,7 +174,7 @@ abstract class Asset
     }
 
     /**
-     * Set the name of the asset
+     * Set the name of the asset.
      *
      * @throws InvalidAssetNameException
      * @throws DuplicateAssetException
@@ -184,7 +187,7 @@ abstract class Asset
             throw new InvalidAssetNameException('Name can not be empty');
         }
 
-        if (false !== strpos($name, DIRECTORY_SEPARATOR)) {
+        if (str_contains($name, DIRECTORY_SEPARATOR)) {
             throw new InvalidAssetNameException('Name can not contain a directory separator');
         }
 
@@ -196,7 +199,7 @@ abstract class Asset
     }
 
     /**
-     * Get the asset name
+     * Get the asset name.
      */
     public function getName(): string
     {
@@ -204,7 +207,7 @@ abstract class Asset
     }
 
     /**
-     * Detach from parent
+     * Detach from parent.
      *
      * Detaching a child without a parent is a no-op.
      */
@@ -219,7 +222,7 @@ abstract class Asset
     }
 
     /**
-     * Set the parent directory
+     * Set the parent directory.
      *
      * Setting a new parent will detach the asset from the old parent.
      *
@@ -245,7 +248,7 @@ abstract class Asset
     }
 
     /**
-     * Get the parent directory
+     * Get the parent directory.
      */
     public function getParent(): ?Directory
     {
@@ -253,7 +256,7 @@ abstract class Asset
     }
 
     /**
-     * Get the device that the asset is attached to
+     * Get the device that the asset is attached to.
      */
     public function getDevice(): ?Device
     {
@@ -261,7 +264,7 @@ abstract class Asset
     }
 
     /**
-     * Set the mode
+     * Set the mode.
      */
     public function setMode(int $mode): void
     {
@@ -269,7 +272,7 @@ abstract class Asset
     }
 
     /**
-     * Get the mode
+     * Get the mode.
      */
     public function getMode(): int
     {
@@ -277,7 +280,7 @@ abstract class Asset
     }
 
     /**
-     * Check if the asset is readable
+     * Check if the asset is readable.
      */
     public function isReadable(int $uid, int $gid): bool
     {
@@ -303,7 +306,7 @@ abstract class Asset
     }
 
     /**
-     * Check if the asset is writable
+     * Check if the asset is writable.
      */
     public function isWritable(int $uid, int $gid): bool
     {
@@ -323,7 +326,7 @@ abstract class Asset
     }
 
     /**
-     * Check if the asset is executable
+     * Check if the asset is executable.
      */
     public function isExecutable(int $uid, int $gid): bool
     {
@@ -339,7 +342,7 @@ abstract class Asset
     }
 
     /**
-     * Check if the asset is owned by a specific user
+     * Check if the asset is owned by a specific user.
      */
     public function isOwnedByUser(int $uid): bool
     {

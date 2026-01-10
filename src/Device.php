@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
 
 use RecursiveDirectoryIterator;
@@ -8,6 +9,8 @@ use TestFs\Exception\InsufficientStorageException;
 
 use function file_get_contents as php_file_get_contents;
 use function is_dir as php_is_dir;
+use function sprintf;
+use function strlen;
 
 class Device
 {
@@ -21,13 +24,13 @@ class Device
     }
 
     /**
-     * Set the device size in bytes
+     * Set the device size in bytes.
      *
      * @throws InsufficientStorageException
      */
     public function setSize(int $size): void
     {
-        if ($size !== self::UNLIMITED_SIZE && $size < $this->root->getSize()) {
+        if (self::UNLIMITED_SIZE !== $size && $size < $this->root->getSize()) {
             throw new InsufficientStorageException($size, $this->root->getSize());
         }
 
@@ -35,7 +38,7 @@ class Device
     }
 
     /**
-     * Get the device size
+     * Get the device size.
      */
     public function getSize(): int
     {
@@ -43,7 +46,7 @@ class Device
     }
 
     /**
-     * Get the available size left on the device
+     * Get the available size left on the device.
      */
     public function getAvailableSize(): int
     {
@@ -55,7 +58,7 @@ class Device
     }
 
     /**
-     * Whether or not the device has enough space to fit a number of bytes
+     * Whether or not the device has enough space to fit a number of bytes.
      */
     public function canFitBytes(int $bytes): bool
     {
@@ -67,7 +70,7 @@ class Device
     }
 
     /**
-     * Whether or not the device has enough space to fit an asset
+     * Whether or not the device has enough space to fit an asset.
      */
     public function canFitAsset(Asset $asset): bool
     {
@@ -75,7 +78,7 @@ class Device
     }
 
     /**
-     * Get the root directory
+     * Get the root directory.
      */
     public function getRoot(): RootDirectory
     {
@@ -83,7 +86,7 @@ class Device
     }
 
     /**
-     * Return a string representing the contents of the device
+     * Return a string representing the contents of the device.
      */
     public function tree(): string
     {
@@ -91,7 +94,7 @@ class Device
     }
 
     /**
-     * Shrink the device size to fit the current contents
+     * Shrink the device size to fit the current contents.
      */
     public function shrinkToFit(): void
     {
@@ -99,7 +102,7 @@ class Device
     }
 
     /**
-     * Mirror a local directory into the virtual filesystem
+     * Mirror a local directory into the virtual filesystem.
      *
      * This method can be used to build up a virtual filesystem based on a local path. Existing
      * contents in the virtual filesystem will be overwritten. The directory specified in $path
@@ -135,10 +138,7 @@ class Device
 
                 if ('' !== $dirName && !is_dir($dirName)) {
                     if (!mkdir($dirName, $file->getPerms() & 0777)) {
-                        throw new BuildFromDirectoryException(sprintf(
-                            'Failed to create directory "%s" in the virtual file system',
-                            $dirName,
-                        ));
+                        throw new BuildFromDirectoryException(sprintf('Failed to create directory "%s" in the virtual file system', $dirName));
                     }
                 }
 
@@ -151,25 +151,16 @@ class Device
             if ($includeFileContents) {
                 $contents = php_file_get_contents($file->getRealpath());
                 if (false === $contents) {
-                    throw new BuildFromDirectoryException(sprintf(
-                        'Failed to read contents of "%s"',
-                        $file->getRealpath(),
-                    ));
+                    throw new BuildFromDirectoryException(sprintf('Failed to read contents of "%s"', $file->getRealpath()));
                 }
             }
 
             if (false === file_put_contents($filePath, $contents)) {
-                throw new BuildFromDirectoryException(sprintf(
-                    'Failed to write contents of "%s" to the virtual file system',
-                    $filePath,
-                ));
+                throw new BuildFromDirectoryException(sprintf('Failed to write contents of "%s" to the virtual file system', $filePath));
             }
 
             if (false === chmod($filePath, $file->getPerms() & 0777)) {
-                throw new BuildFromDirectoryException(sprintf(
-                    'Failed to set permissions of "%s" in the virtual file system',
-                    $filePath,
-                ));
+                throw new BuildFromDirectoryException(sprintf('Failed to set permissions of "%s" in the virtual file system', $filePath));
             }
         }
     }
