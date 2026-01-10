@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -29,28 +30,28 @@ class FopenModeTest extends TestCase
     {
         return [
             'read' => [
-                'mode'             => 'r',
-                'extended'         => true,
-                'extra'            => null,
-                'expectedRead'     => true,
-                'expectedWrite'    => true,
-                'expectedOffset'   => 0,
+                'mode' => 'r',
+                'extended' => true,
+                'extra' => null,
+                'expectedRead' => true,
+                'expectedWrite' => true,
+                'expectedOffset' => 0,
                 'expectedTruncate' => false,
-                'expectedCreate'   => false,
-                'expectedBinary'   => false,
-                'expectedText'     => false,
+                'expectedCreate' => false,
+                'expectedBinary' => false,
+                'expectedText' => false,
             ],
             'write' => [
-                'mode'             => 'w',
-                'extended'         => false,
-                'extra'            => null,
-                'expectedRead'     => false,
-                'expectedWrite'    => true,
-                'expectedOffset'   => 0,
+                'mode' => 'w',
+                'extended' => false,
+                'extra' => null,
+                'expectedRead' => false,
+                'expectedWrite' => true,
+                'expectedOffset' => 0,
                 'expectedTruncate' => true,
-                'expectedCreate'   => true,
-                'expectedBinary'   => false,
-                'expectedText'     => false,
+                'expectedCreate' => true,
+                'expectedBinary' => false,
+                'expectedText' => false,
             ],
         ];
     }

@@ -1,12 +1,29 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
+
+use function chgrp as php_chgrp;
+use function chmod as php_chmod;
+use function chown as php_chown;
+use function file_get_contents as php_file_get_contents;
+use function file_put_contents as php_file_put_contents;
+use function filetype as php_filetype;
+use function fopen as php_fopen;
+use function is_dir as php_is_dir;
+use function mkdir as php_mkdir;
+use function opendir as php_opendir;
+use function rename as php_rename;
+use function rmdir as php_rmdir;
+use function stat as php_stat;
+use function touch as php_touch;
+use function unlink as php_unlink;
 
 /**
  * @see https://www.php.net/manual/en/function.chgrp.php
  */
 function chgrp(string $filename, string|int $group): bool
 {
-    return \chgrp(url($filename), $group);
+    return php_chgrp(url($filename), $group);
 }
 
 /**
@@ -14,7 +31,7 @@ function chgrp(string $filename, string|int $group): bool
  */
 function chmod(string $filename, int $permissions): bool
 {
-    return \chmod(url($filename), $permissions);
+    return php_chmod(url($filename), $permissions);
 }
 
 /**
@@ -22,27 +39,29 @@ function chmod(string $filename, int $permissions): bool
  */
 function chown(string $filename, string|int $user): bool
 {
-    return \chown(url($filename), $user);
+    return php_chown(url($filename), $user);
 }
 
 /**
  * @see https://www.php.net/manual/en/function.file-get-contents.php
+ *
  * @param ?positive-int $length
- * @param ?resource $context
+ * @param ?resource     $context
  */
 function file_get_contents(string $filename, bool $use_include_path = false, $context = null, int $offset = 0, ?int $length = null): string|false
 {
-    return \file_get_contents(url($filename), $use_include_path, $context, $offset, $length);
+    return php_file_get_contents(url($filename), $use_include_path, $context, $offset, $length);
 }
 
 /**
  * @see https://www.php.net/manual/en/function.file-put-contents.php
- * @param mixed $data
+ *
+ * @param mixed     $data    the data to write
  * @param ?resource $context
  */
 function file_put_contents(string $filename, $data, int $flags = 0, $context = null): int|false
 {
-    return \file_put_contents(url($filename), $data, $flags, $context);
+    return php_file_put_contents(url($filename), $data, $flags, $context);
 }
 
 /**
@@ -50,17 +69,19 @@ function file_put_contents(string $filename, $data, int $flags = 0, $context = n
  */
 function filetype(string $filename): string|false
 {
-    return \filetype(url($filename));
+    return php_filetype(url($filename));
 }
 
 /**
  * @see https://www.php.net/manual/en/function.fopen.php
+ *
  * @param ?resource $context
+ *
  * @return resource|false
  */
 function fopen(string $filename, string $mode, bool $use_include_path = false, $context = null)
 {
-    return \fopen(url($filename), $mode, $use_include_path, $context);
+    return php_fopen(url($filename), $mode, $use_include_path, $context);
 }
 
 /**
@@ -68,53 +89,59 @@ function fopen(string $filename, string $mode, bool $use_include_path = false, $
  */
 function is_dir(string $filename): bool
 {
-    return \is_dir(url($filename));
+    return php_is_dir(url($filename));
 }
 
 /**
  * @see https://www.php.net/manual/en/function.mkdir.php
+ *
  * @param ?resource $context
  */
 function mkdir(string $directory, int $permissions = 0777, bool $recursive = false, $context = null): bool
 {
-    return \mkdir(url($directory), $permissions, $recursive, $context);
+    return php_mkdir(url($directory), $permissions, $recursive, $context);
 }
 
 /**
  * @see https://www.php.net/manual/en/function.opendir.php
+ *
  * @param ?resource $context
+ *
  * @return resource|false
  */
 function opendir(string $directory, $context = null)
 {
-    return \opendir(url($directory), $context);
+    return php_opendir(url($directory), $context);
 }
 
 /**
  * @see https://www.php.net/manual/en/function.rename.php
+ *
  * @param ?resource $context
  */
 function rename(string $from, string $to, $context = null): bool
 {
-    return \rename(url($from), url($to), $context);
+    return php_rename(url($from), url($to), $context);
 }
 
 /**
  * @see https://www.php.net/manual/en/function.rmdir.php
+ *
  * @param ?resource $context
  */
 function rmdir(string $directory, $context = null): bool
 {
-    return \rmdir(url($directory), $context);
+    return php_rmdir(url($directory), $context);
 }
 
 /**
  * @see https://www.php.net/manual/en/function.stat.php
+ *
  * @return array<mixed>|false
  */
 function stat(string $filename): array|false
 {
-    return \stat(url($filename));
+    return php_stat(url($filename));
 }
 
 /**
@@ -122,20 +149,21 @@ function stat(string $filename): array|false
  */
 function touch(string $filename, ?int $mtime = null, ?int $atime = null): bool
 {
-    return \touch(url($filename), $mtime, $atime);
+    return php_touch(url($filename), $mtime, $atime);
 }
 
 /**
  * @see https://www.php.net/manual/en/function.unlink.php
+ *
  * @param ?resource $context
  */
 function unlink(string $filename, $context = null): bool
 {
-    return \unlink(url($filename), $context);
+    return php_unlink(url($filename), $context);
 }
 
 /**
- * Convert a regular path to a TestFs URL
+ * Convert a regular path to a TestFs URL.
  */
 function url(string $path): string
 {

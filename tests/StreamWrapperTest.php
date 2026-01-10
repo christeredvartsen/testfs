@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -10,6 +11,13 @@ use TestFs\Exception\InvalidUrlException;
 use TestFs\Exception\ProtocolAlreadyRegisteredException;
 use TestFs\Exception\UnknownGroupException;
 use TestFs\Exception\UnknownUserException;
+
+use function file_get_contents as php_file_get_contents;
+use function sprintf;
+
+use const LOCK_EX;
+use const LOCK_NB;
+use const SEEK_SET;
 
 #[CoversClass(StreamWrapper::class)]
 class StreamWrapperTest extends TestCase
@@ -154,7 +162,7 @@ class StreamWrapperTest extends TestCase
         ];
 
         foreach (array_keys($entries) as $name) {
-            touch(sprintf($name));
+            touch($name);
         }
 
         $path = 'foo';
@@ -254,9 +262,9 @@ class StreamWrapperTest extends TestCase
 
     public function testCanWriteAndReadCompleteFiles(): void
     {
-        $handle = $this->getHandleForFixture('foo.txt', 'r', FIXTURES_DIR . '/file.txt');
+        $handle = $this->getHandleForFixture('foo.txt', 'r', FIXTURES_DIR.'/file.txt');
         $this->assertTrue(fclose($handle));
-        $this->assertSame(\file_get_contents(FIXTURES_DIR . '/file.txt'), file_get_contents('foo.txt'));
+        $this->assertSame(php_file_get_contents(FIXTURES_DIR.'/file.txt'), file_get_contents('foo.txt'));
     }
 
     public function testThrowsExceptionWhenSettingUidThatDoesNotExist(): void
@@ -362,7 +370,7 @@ class StreamWrapperTest extends TestCase
 
     public function testCanCheckForEndOfFile(): void
     {
-        $handle = $this->getHandleForFixture('foo.txt', 'r', FIXTURES_DIR . '/file.txt');
+        $handle = $this->getHandleForFixture('foo.txt', 'r', FIXTURES_DIR.'/file.txt');
         $this->assertSame('this is a test file', trim((string) fgets($handle)));
         $this->assertFalse(feof($handle), 'Did not expect end of file');
         $this->assertSame('with multiple', trim((string) fgets($handle)));
@@ -373,30 +381,31 @@ class StreamWrapperTest extends TestCase
 
     public function testCanSeekInFiles(): void
     {
-        $handle = $this->getHandleForFixture('foo.txt', 'r', FIXTURES_DIR . '/file.txt');
+        $handle = $this->getHandleForFixture('foo.txt', 'r', FIXTURES_DIR.'/file.txt');
         fseek($handle, 4, SEEK_SET);
         $this->assertSame(' is ', fread($handle, 4));
     }
 
     public function testCanTruncateFile(): void
     {
-        $handle = $this->getHandleForFixture('foo.txt', 'r+', FIXTURES_DIR . '/file.txt');
+        $handle = $this->getHandleForFixture('foo.txt', 'r+', FIXTURES_DIR.'/file.txt');
         ftruncate($handle, 7);
         $this->assertSame('this is', fgets($handle));
         $this->assertTrue(feof($handle), 'Expected end of file');
     }
 
     /**
-     * Get a file handle for a fixture
+     * Get a file handle for a fixture.
      *
-     * @param string $url The name of the tfs file, for instance foo.txt
-     * @param string $mode The mode to use when opening the file
+     * @param string $url         The name of the tfs file, for instance foo.txt
+     * @param string $mode        The mode to use when opening the file
      * @param string $fixturePath The path to the local fixture
+     *
      * @return resource Returns a file handle
      */
     private function getHandleForFixture(string $url, string $mode, string $fixturePath)
     {
-        $fixture = \file_get_contents($fixturePath);
+        $fixture = php_file_get_contents($fixturePath);
         file_put_contents($url, $fixture);
 
         /** @var resource */
@@ -742,7 +751,6 @@ class StreamWrapperTest extends TestCase
         StreamWrapper::addGroup(1, 'group1', [1]);
         StreamWrapper::setUid(1);
         StreamWrapper::setGid(1);
-
 
         $this->assertFalse($this->ignoreError(fn () => fopen('dir/file', 'w+')), 'Expected fopen to fail');
 

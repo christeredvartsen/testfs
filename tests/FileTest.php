@@ -1,9 +1,18 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+
+use const LOCK_EX;
+use const LOCK_NB;
+use const LOCK_SH;
+use const LOCK_UN;
+use const SEEK_CUR;
+use const SEEK_END;
+use const SEEK_SET;
 
 #[CoversClass(File::class)]
 class FileTest extends TestCase
@@ -184,7 +193,7 @@ class FileTest extends TestCase
 
     public function testTruncateDataWhenThereIsNotEnoughSpaceOnDevice(): void
     {
-        $file   = new File('name');
+        $file = new File('name');
         $device = new Device(7);
         $device->getRoot()->addChild($file);
 
@@ -219,14 +228,14 @@ class FileTest extends TestCase
     {
         return [
             'empty file' => [
-                'content'        => '',
-                'bytes'          => 10,
+                'content' => '',
+                'bytes' => 10,
                 'expectedOutput' => '',
                 'expectedOffset' => 0,
             ],
             'file with contents' => [
-                'content'        => 'this is some data',
-                'bytes'          => 7,
+                'content' => 'this is some data',
+                'bytes' => 7,
                 'expectedOutput' => 'this is',
                 'expectedOffset' => 7,
             ],
@@ -241,15 +250,15 @@ class FileTest extends TestCase
         return [
             'empty string' => [
                 'existingContent' => 'existing content',
-                'newDataLength'   => 0,
-                'newData'         => '',
-                'newContent'      => 'existing content',
+                'newDataLength' => 0,
+                'newData' => '',
+                'newContent' => 'existing content',
             ],
             'write some data' => [
                 'existingContent' => 'exsiting content',
-                'newDataLength'   => 9,
-                'newData'         => 'some data',
-                'newContent'      => 'some datacontent',
+                'newDataLength' => 9,
+                'newData' => 'some data',
+                'newContent' => 'some datacontent',
             ],
         ];
     }
@@ -262,22 +271,22 @@ class FileTest extends TestCase
         return [
             'truncate empty file' => [
                 'existingContent' => '',
-                'size'            => 0,
+                'size' => 0,
                 'expectedContent' => '',
             ],
             'truncate file with contents' => [
                 'existingContent' => 'existing content',
-                'size'            => 0,
+                'size' => 0,
                 'expectedContent' => '',
             ],
             'truncate to larger size' => [
                 'existingContent' => 'content',
-                'size'            => 10,
+                'size' => 10,
                 'expectedContent' => "content\0\0\0",
             ],
             'truncate to smaller size and rewind' => [
                 'existingContent' => 'content',
-                'size'            => 4,
+                'size' => 4,
                 'expectedContent' => 'cont',
             ],
         ];
@@ -290,24 +299,24 @@ class FileTest extends TestCase
     {
         return [
             'set' => [
-                'content'         => 'file content',
-                'seek'            => 5,
-                'whence'          => SEEK_SET,
-                'expectedOffset'  => 5,
+                'content' => 'file content',
+                'seek' => 5,
+                'whence' => SEEK_SET,
+                'expectedOffset' => 5,
                 'expectedContent' => 'file content',
             ],
             'cur' => [
-                'content'         => 'file content',
-                'seek'            => 3,
-                'whence'          => SEEK_CUR,
-                'expectedOffset'  => 3,
+                'content' => 'file content',
+                'seek' => 3,
+                'whence' => SEEK_CUR,
+                'expectedOffset' => 3,
                 'expectedContent' => 'file content',
             ],
             'end' => [
-                'content'         => 'file content',
-                'seek'            => 3,
-                'whence'          => SEEK_END,
-                'expectedOffset'  => 15,
+                'content' => 'file content',
+                'seek' => 3,
+                'whence' => SEEK_END,
+                'expectedOffset' => 15,
                 'expectedContent' => "file content\0\0\0",
             ],
         ];

@@ -1,5 +1,10 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
+
+use function in_array;
+
+use const SEEK_END;
 
 class FopenMode
 {
@@ -12,17 +17,17 @@ class FopenMode
     private bool $text;
 
     /**
-     * Create a mode
+     * Create a mode.
      */
     public function __construct(string $mode, bool $extended, ?string $extra = null)
     {
-        $this->read     = 'r' === $mode || $extended;
-        $this->write    = in_array($mode, ['w', 'a', 'x', 'c']) || $extended;
-        $this->offset   = 'a' === $mode ? SEEK_END : 0;
+        $this->read = 'r' === $mode || $extended;
+        $this->write = in_array($mode, ['w', 'a', 'x', 'c']) || $extended;
+        $this->offset = 'a' === $mode ? SEEK_END : 0;
         $this->truncate = 'w' === $mode;
-        $this->create   = in_array($mode, ['w', 'a', 'x', 'c']);
-        $this->binary   = 'b' === $extra;
-        $this->text     = 't' === $extra;
+        $this->create = in_array($mode, ['w', 'a', 'x', 'c']);
+        $this->binary = 'b' === $extra;
+        $this->text = 't' === $extra;
     }
 
     public function read(): bool

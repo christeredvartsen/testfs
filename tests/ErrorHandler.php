@@ -1,9 +1,15 @@
 <?php declare(strict_types=1);
+
 namespace TestFs;
 
 use Closure;
 use Exception;
 use RuntimeException;
+
+use function sprintf;
+
+use const E_USER_NOTICE;
+use const E_USER_WARNING;
 
 trait ErrorHandler
 {
@@ -18,6 +24,7 @@ trait ErrorHandler
                         default: throw new RuntimeException(sprintf('unknown error: %s (%d)', $errstr, $errno));
                     }
                 }
+
                 return true;
             },
         );
@@ -26,9 +33,9 @@ trait ErrorHandler
     private function ignoreError(Closure $func): mixed
     {
         $level = error_reporting(0);
-        /** @var mixed */
         $result = $func();
         error_reporting($level);
+
         return $result;
     }
 }
