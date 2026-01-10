@@ -48,16 +48,16 @@
     ]
   },
   "scripts": {
-    "test": "vendor/bin/phpunit",
-    "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
-    "sa": "vendor/bin/phpstan analyse",
-    "cs": "vendor/bin/php-cs-fixer check --diff",
-    "cs:fix": "vendor/bin/php-cs-fixer fix --diff",
     "ci": [
+      "@cs",
       "@sa",
-      "@test",
-      "@cs"
-    ]
+      "@test"
+    ],
+    "cs": "vendor/bin/php-cs-fixer check",
+    "cs:fix": "vendor/bin/php-cs-fixer fix",
+    "sa": "vendor/bin/phpstan analyse",
+    "test": "vendor/bin/phpunit",
+    "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage"
   },
   "config": {
     "sort-packages": true,
