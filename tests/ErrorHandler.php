@@ -16,7 +16,7 @@ trait ErrorHandler
     public static function setUpBeforeClass(): void
     {
         set_error_handler(
-            function (int $errno, string $errstr, string $errfile, int $errline): bool {
+            static function (int $errno, string $errstr, string $errfile, int $errline): bool {
                 if (0 !== error_reporting()) {
                     switch ($errno) {
                         case E_USER_NOTICE: throw new Notice($errstr);

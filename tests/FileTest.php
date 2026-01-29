@@ -197,7 +197,7 @@ class FileTest extends TestCase
         $device = new Device(7);
         $device->getRoot()->addChild($file);
 
-        $this->ignoreError(fn () => $file->write('some data'));
+        $this->ignoreError(static fn () => $file->write('some data'));
         $this->assertSame('some da', $file->getContents());
 
         $this->expectExceptionObject(new Notice('fwrite(): write failed, no space left on device'));
