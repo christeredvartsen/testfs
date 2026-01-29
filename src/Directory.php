@@ -184,7 +184,7 @@ class Directory extends Asset
 
         $this->children = array_values(array_filter(
             $this->children,
-            fn (Asset $asset): bool => $name !== $asset->getName(),
+            static fn (Asset $asset): bool => $name !== $asset->getName(),
         ));
     }
 
@@ -207,13 +207,13 @@ class Directory extends Asset
         $output = [$this->getName()];
         $children = $this->children;
 
-        usort($children, fn (Asset $a, Asset $b): int => strcmp($a->getName(), $b->getName()));
+        usort($children, static fn (Asset $a, Asset $b): int => strcmp($a->getName(), $b->getName()));
 
         $numChildren = count($children);
         $prefixIndex = count($prefix);
         $i = 0;
         $p = implode('', array_map(
-            fn (bool $hasMore): string => $hasMore ? '│   ' : '    ',
+            static fn (bool $hasMore): string => $hasMore ? '│   ' : '    ',
             $prefix,
         ));
 

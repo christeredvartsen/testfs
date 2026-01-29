@@ -307,7 +307,7 @@ class StreamWrapper
             return false;
         }
 
-        if (!($asset instanceof Directory)) {
+        if (!$asset instanceof Directory) {
             $this->warn(sprintf('opendir(%s): failed to open dir: Not a directory', $path));
 
             return false;
@@ -484,7 +484,7 @@ class StreamWrapper
             return false;
         }
 
-        if (!($asset instanceof Directory)) {
+        if (!$asset instanceof Directory) {
             $this->warn(sprintf('rmdir(%s): Not a directory', $path));
 
             return false;

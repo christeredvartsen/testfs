@@ -123,7 +123,7 @@ class Device
         }
 
         $prefixLength = strlen($realPath);
-        $trimPath = fn (string $path): string => substr($path, $prefixLength + 1);
+        $trimPath = static fn (string $path): string => substr($path, $prefixLength + 1);
 
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($path),
